@@ -13,6 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+
 package cmd
 
 import (
@@ -23,6 +24,7 @@ import (
 	"github.com/spf13/viper"
 )
 
+// set up the global config file
 var cfgFile string
 
 // rootCmd represents the base command when called without any subcommands
