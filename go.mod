@@ -3,6 +3,7 @@ module github.com/christianh814/mta
 go 1.18
 
 require (
+	github.com/fluxcd/source-controller/api v0.25.5
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/cobra v1.4.0
 	github.com/spf13/viper v1.12.0
@@ -16,6 +17,7 @@ require (
 	github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 // indirect
 	github.com/emicklei/go-restful v2.9.5+incompatible // indirect
 	github.com/evanphx/json-patch v4.12.0+incompatible // indirect
+	github.com/fluxcd/pkg/apis/acl v0.0.3 // indirect
 	github.com/fluxcd/pkg/apis/kustomize v0.4.2 // indirect
 	github.com/fluxcd/pkg/apis/meta v0.14.2 // indirect
 	github.com/go-openapi/jsonpointer v0.19.5 // indirect

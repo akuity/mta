@@ -17,12 +17,16 @@ package cmd
 
 import (
 	"context"
-	"fmt"
+	"encoding/base64"
 	"os"
 
+	"github.com/christianh814/mta/pkg/utils"
+	"github.com/christianh814/mta/vars/templates"
 	kustomizev1 "github.com/fluxcd/kustomize-controller/api/v1beta1"
+	sourcev1 "github.com/fluxcd/source-controller/api/v1beta1"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/clientcmd"
 	client "sigs.k8s.io/controller-runtime/pkg/client"
@@ -39,45 +43,80 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		// Set up the default context
-		ctx := context.TODO()
-
-		// Set up the schema because Kustomization is a CRD
-		scheme := runtime.NewScheme()
-		kustomizev1.AddToScheme(scheme)
-
-		// Get the kubeconfig file if supplied
+		// Get the options from the CLI
 		kubeConfig, err := cmd.Flags().GetString("kubeconfig")
 		if err != nil {
 			log.Fatal(err)
 		}
+		kustomizationName, _ := cmd.Flags().GetString("name")
+		kustomizationNamespace, _ := cmd.Flags().GetString("namespace")
 
-		// create client
-		/*
-			kubeClient, err := utils.NewClient(kubeConfig)
-			if err != nil {
-				log.Fatal(err)
-			}
-		*/
+		// Set up the default context
+		ctx := context.TODO()
 
-		// create rest config
+		// Set up the schema because Kustomization and GitRepo is a CRD
+		scheme := runtime.NewScheme()
+		kustomizev1.AddToScheme(scheme)
+		sourcev1.AddToScheme(scheme)
+
+		// create rest config using the kubeconfig file.
 		restConfig, err := clientcmd.BuildConfigFromFlags("", kubeConfig)
 		if err != nil {
 			log.Fatal(err)
 		}
 
 		// Create a new client based on the restconfig and scheme
-		c, err := client.New(restConfig, client.Options{
+		k, err := client.New(restConfig, client.Options{
 			Scheme: scheme,
 		})
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		// get the kustomization based on the type
+		// Create a standard client to get the secret later
+		sc, err := utils.NewClient(kubeConfig)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		// get the kustomization based on the type, report if there's an error
 		kustomization := &kustomizev1.Kustomization{}
-		c.Get(ctx, client.ObjectKey{Namespace: "flux-system", Name: "flux-system"}, kustomization)
-		fmt.Printf("Name: " + kustomization.Name + "\nPath: " + kustomization.Spec.Path + "\n")
+		err = k.Get(ctx, client.ObjectKey{Namespace: kustomizationNamespace, Name: kustomizationName}, kustomization)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		// get the gitsource
+		gitSource := &sourcev1.GitRepository{}
+		err = k.Get(ctx, client.ObjectKey{Namespace: kustomizationNamespace, Name: kustomizationName}, gitSource)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		//Get the secret holding the info we need
+		secret, err := sc.CoreV1().Secrets(kustomizationNamespace).Get(ctx, gitSource.Spec.SecretRef.Name, v1.GetOptions{})
+		if err != nil {
+			log.Fatal()
+		}
+
+		// Generate Template YAML based on things we've figured out
+		argoCDYAMLVars := struct {
+			SSHPrivateKey    string
+			GitOpsRepoB64    string
+			SourcePath       string
+			GitOpsRepo       string
+			GitOpsRepoBranch string
+		}{
+			SSHPrivateKey:    base64.StdEncoding.EncodeToString(secret.Data["identity"]),
+			GitOpsRepoB64:    base64.StdEncoding.EncodeToString([]byte(gitSource.Spec.URL)),
+			SourcePath:       kustomization.Spec.Path,
+			GitOpsRepo:       gitSource.Spec.URL,
+			GitOpsRepoBranch: gitSource.Spec.Reference.Branch,
+		}
+		err = utils.WriteTemplate(templates.ArgoCDMigrationYAML, argoCDYAMLVars)
+		if err != nil {
+			log.Fatal(err)
+		}
 
 	},
 }
@@ -91,7 +130,13 @@ func init() {
 	// and all subcommands, e.g.:
 	// kustomizationCmd.PersistentFlags().String("foo", "", "A help for foo")
 	kcf, _ := os.UserHomeDir()
-	kustomizationCmd.PersistentFlags().String("kubeconfig", kcf+"/.kube/config", "Path to the kubeconfig file to use (if not the standard one).")
+	kustomizationCmd.Flags().String("kubeconfig", kcf+"/.kube/config", "Path to the kubeconfig file to use (if not the standard one).")
+	kustomizationCmd.Flags().String("name", "", "Name of Kustomization to export")
+	kustomizationCmd.Flags().String("namespace", "", "Namespace of where the Kustomization is")
+
+	//Require the following flags
+	kustomizationCmd.MarkFlagRequired("name")
+	kustomizationCmd.MarkFlagRequired("namespace")
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:

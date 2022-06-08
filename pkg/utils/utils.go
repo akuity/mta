@@ -2,6 +2,7 @@ package utils
 
 import (
 	"os"
+	"text/template"
 
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
@@ -39,4 +40,16 @@ func NewClient(kubeConfigPath string) (kubernetes.Interface, error) {
 		return nil, err
 	}
 	return kubernetes.NewForConfig(kubeConfig)
+}
+
+// WriteTemplate is a generic template writing mechanism
+func WriteTemplate(tpl string, vars interface{}) error {
+	tmpl := template.Must(template.New("").Parse(tpl))
+	err := tmpl.Execute(os.Stdout, vars)
+
+	if err != nil {
+		return err
+	}
+	// If we're here we should be okay
+	return nil
 }
