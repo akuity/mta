@@ -73,7 +73,7 @@ to quickly create a Cobra application.`,
 			log.Fatal(err)
 		}
 
-		// Create a standard client to get the secret later
+		// Create a standard client to get the secret from the Core API later
 		sc, err := utils.NewClient(kubeConfig)
 		if err != nil {
 			log.Fatal(err)
@@ -99,6 +99,11 @@ to quickly create a Cobra application.`,
 			log.Fatal()
 		}
 
+		//TODO: Figure out how to "sanitize" gitSource.Spec.URL so that it plays nice with Argo CD Applicationsets
+		/*
+			https://go.dev/play/p/BKOC8-SJmH3
+		*/
+
 		// Generate Template YAML based on things we've figured out
 		argoCDYAMLVars := struct {
 			SSHPrivateKey    string
@@ -106,13 +111,18 @@ to quickly create a Cobra application.`,
 			SourcePath       string
 			GitOpsRepo       string
 			GitOpsRepoBranch string
+			RawPathBasename  string
+			RawPath          string
 		}{
 			SSHPrivateKey:    base64.StdEncoding.EncodeToString(secret.Data["identity"]),
 			GitOpsRepoB64:    base64.StdEncoding.EncodeToString([]byte(gitSource.Spec.URL)),
 			SourcePath:       kustomization.Spec.Path,
 			GitOpsRepo:       gitSource.Spec.URL,
 			GitOpsRepoBranch: gitSource.Spec.Reference.Branch,
+			RawPathBasename:  `'{{path.basename}}'`,
+			RawPath:          `'{{path}}'`,
 		}
+		//Send the YAML to stdout
 		err = utils.WriteTemplate(templates.ArgoCDMigrationYAML, argoCDYAMLVars)
 		if err != nil {
 			log.Fatal(err)
