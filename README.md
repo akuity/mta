@@ -6,7 +6,7 @@ CD. This is in the "proof of concept" phase and I make no guarantees
 
 Currently working:
 
-- [*] Migrate Kustomizations
+- [x] Migrate Kustomizations
 - [ ] Migrate HelmReleases
 - [ ] Auto Scan/Migrate
 - [ ] Uninstall Flux
