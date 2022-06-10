@@ -3,6 +3,7 @@ module github.com/christianh814/mta
 go 1.18
 
 require (
+	github.com/fluxcd/helm-controller/api v0.22.1
 	github.com/fluxcd/source-controller/api v0.25.5
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/cobra v1.4.0

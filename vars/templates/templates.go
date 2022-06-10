@@ -1,6 +1,6 @@
 package templates
 
-var ArgoCDMigrationYAML string = `apiVersion: v1
+var ArgoCDAppSetMigrationYAML string = `apiVersion: v1
 kind: Secret
 metadata:
   name: mta-migration

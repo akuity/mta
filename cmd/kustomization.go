@@ -138,7 +138,7 @@ with kubectl.`,
 			RawPath:           `'{{path}}'`,
 		}
 		//Send the YAML to stdout
-		err = utils.WriteTemplate(templates.ArgoCDMigrationYAML, argoCDYAMLVars)
+		err = utils.WriteTemplate(templates.ArgoCDAppSetMigrationYAML, argoCDYAMLVars)
 		if err != nil {
 			log.Fatal(err)
 		}

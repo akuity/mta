@@ -30,14 +30,20 @@ var cfgFile string
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:     "mta",
-	Version: "v0.0.1",
+	Version: "v0.0.2",
 	Short:   "This commands turns Flux Kustomizations and HelmReleases into Argo CD Applications",
 	Long: `This is a migration tool that helps you move your Flux Kustomizations and HelmReleases
-into Argo CD ApplicationSet. Kustomization example:
+into an Argo CD ApplicationSet or Application.
+
+Kustomization example:
 
 mta kustomization --name=mykustomization --namespace=flux-system | kubectl apply -n argocd -f -
 
-This utilty exports the named Kustomization or HelmRelease and the source Git repo and
+HelmRelease example:
+
+mta helmrelease --name=myhelmrelease --namespace=flux-system | kubectl apply -n argocd -f -
+
+This utilty exports the named Kustomization or HelmRelease and the source Git repo or Helm repo and
 creates a manifests to stdout, which you can pipe into an apply command
 with kubectl.`,
 }
