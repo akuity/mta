@@ -52,3 +52,28 @@ spec:
       destination:
         server: https://kubernetes.default.svc
 `
+
+var ArgoCDHelmMigrationYAML string = `apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{.HelmAppName}}
+  namespace: argocd
+spec:
+  destination:
+    namespace: {{.HelmAppNamespace}}
+    server: https://kubernetes.default.svc
+  project: default
+  source:
+    chart: {{.HelmChart}}
+    repoURL: {{.HelmRepoUrl}}
+    targetRevision: {{.HelmTargetRevision}}
+    helm:
+      values: |
+{{.HelmValues | trim | indent 8 }}
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace={{.HelmCreateNamespace}}
+`

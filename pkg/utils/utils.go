@@ -4,6 +4,8 @@ import (
 	"os"
 	"text/template"
 
+	"github.com/Masterminds/sprig/v3"
+
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
@@ -44,7 +46,7 @@ func NewClient(kubeConfigPath string) (kubernetes.Interface, error) {
 
 // WriteTemplate is a generic template writing mechanism
 func WriteTemplate(tpl string, vars interface{}) error {
-	tmpl := template.Must(template.New("").Parse(tpl))
+	tmpl := template.Must(template.New("").Funcs(sprig.GenericFuncMap()).Parse(tpl))
 	err := tmpl.Execute(os.Stdout, vars)
 
 	if err != nil {

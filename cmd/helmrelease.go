@@ -18,11 +18,12 @@ package cmd
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"os"
 
 	yaml "sigs.k8s.io/yaml"
 
+	"github.com/christianh814/mta/pkg/utils"
+	"github.com/christianh814/mta/vars/templates"
 	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta1"
 	log "github.com/sirupsen/logrus"
@@ -76,15 +77,6 @@ with kubectl.`,
 			log.Fatal(err)
 		}
 
-		/*
-				WE MIGHT NOT NEED THIS
-			// Create a standard client to get the secret from the Core API later
-			sc, err := utils.NewClient(kubeConfig)
-			if err != nil {
-				log.Fatal(err)
-			}
-		*/
-
 		//Get the helmrelease based on type, report if there's an error
 		helmRelease := &helmv2.HelmRelease{}
 		err = k.Get(ctx, client.ObjectKey{Namespace: helmReleaseNamespace, Name: helmReleaseName}, helmRelease)
@@ -92,7 +84,14 @@ with kubectl.`,
 			log.Fatal(err)
 		}
 
-		// The Values output is in JSON
+		// Get the helmchat based on type, report if error
+		helmRepo := &sourcev1.HelmRepository{}
+		err = k.Get(ctx, client.ObjectKey{Namespace: helmReleaseNamespace, Name: helmRelease.Spec.Chart.Spec.SourceRef.Name}, helmRepo)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		// The Values to the Helm chart output is in JSON
 		json, err := json.Marshal(helmRelease.Spec.Values)
 		if err != nil {
 			log.Fatal(err)
@@ -103,7 +102,46 @@ with kubectl.`,
 		if err != nil {
 			log.Fatal(err)
 		}
-		fmt.Println(string(yaml))
+
+		// Variables based on what we got from the cluster
+		helmAppName := helmRelease.Spec.Chart.Spec.Chart + "-" + helmRelease.Name
+		helmAppNamespace := helmRelease.Spec.TargetNamespace
+		helmChart := helmRelease.Spec.Chart.Spec.Chart
+		helmRepoUrl := helmRepo.Spec.URL
+		helmTargetRevision := helmRelease.Spec.Chart.Spec.Version
+		helmValues := string(yaml)
+		// Createnamespace comes out as a Bool, need to convert into a string
+		var helmCreateNamespace string
+		if helmRelease.Spec.Install.CreateNamespace {
+			helmCreateNamespace = "true"
+		} else {
+			helmCreateNamespace = "false"
+		}
+
+		// Generate Template YAML based on things we've figured out
+		argoCDHelmYAMLVars := struct {
+			HelmAppName         string
+			HelmAppNamespace    string
+			HelmChart           string
+			HelmRepoUrl         string
+			HelmTargetRevision  string
+			HelmValues          string
+			HelmCreateNamespace string
+		}{
+			HelmAppName:         helmAppName,
+			HelmAppNamespace:    helmAppNamespace,
+			HelmChart:           helmChart,
+			HelmRepoUrl:         helmRepoUrl,
+			HelmTargetRevision:  helmTargetRevision,
+			HelmValues:          helmValues,
+			HelmCreateNamespace: helmCreateNamespace,
+		}
+
+		//Send the YAML to stdout
+		err = utils.WriteTemplate(templates.ArgoCDHelmMigrationYAML, argoCDHelmYAMLVars)
+		if err != nil {
+			log.Fatal(err)
+		}
 
 	},
 }
@@ -118,8 +156,9 @@ func init() {
 	// helmreleaseCmd.PersistentFlags().String("foo", "", "A help for foo")
 	kcf, _ := os.UserHomeDir()
 	helmreleaseCmd.Flags().String("kubeconfig", kcf+"/.kube/config", "Path to the kubeconfig file to use (if not the standard one).")
-	helmreleaseCmd.Flags().String("name", "flux-system", "Name of HelmRelease to export")
+	helmreleaseCmd.Flags().String("name", "", "Name of HelmRelease to export")
 	helmreleaseCmd.Flags().String("namespace", "flux-system", "Namespace of where the HelmRelease is")
+	helmreleaseCmd.MarkFlagRequired("name")
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
