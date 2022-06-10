@@ -1,5 +1,5 @@
 /*
-Copyright © 2022 Christian Hernandez christian@email.com
+Copyright © 2022 Christian Hernandez christian@chernand.io
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import (
 	"context"
 	"encoding/base64"
 	"os"
+	"strings"
 
 	"github.com/christianh814/mta/pkg/utils"
 	"github.com/christianh814/mta/vars/templates"
@@ -34,14 +35,17 @@ import (
 
 // kustomizationCmd represents the kustomization command
 var kustomizationCmd = &cobra.Command{
-	Use:   "kustomization",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
+	Use:     "kustomization",
+	Aliases: []string{"k"},
+	Short:   "Exports a Kustomization into an ApplicationSet",
+	Long: `This is a migration tool that helps you move your Flux Kustomizations
+into an Argo CD ApplicationSet. Example:
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+mta kustomization --name=mykustomization --namespace=flux-system | kubectl apply -n argocd -f -
+
+This utilty exports the named Kustomization and the source Git repo and
+creates a manifests to stdout, which you can pipe into an apply command
+with kubectl.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		// Get the options from the CLI
 		kubeConfig, err := cmd.Flags().GetString("kubeconfig")
@@ -99,28 +103,39 @@ to quickly create a Cobra application.`,
 			log.Fatal()
 		}
 
-		//TODO: Figure out how to "sanitize" gitSource.Spec.URL so that it plays nice with Argo CD Applicationsets
-		/*
-			https://go.dev/play/p/BKOC8-SJmH3
-		*/
+		//	Argo CD ApplicationSet is sensitive about how you give it paths in the Git Dir generator. We need to figure some things out
+		var sourcePath string
+		var sourcePathExclude string
+
+		spl := strings.SplitAfter(kustomization.Spec.Path, "./")
+
+		if len(spl[1]) == 0 {
+			sourcePath = `'*'`
+			sourcePathExclude = "flux-system"
+		} else {
+			sourcePath = spl[1] + "/*"
+			sourcePathExclude = spl[1] + "/flux-system"
+		}
 
 		// Generate Template YAML based on things we've figured out
 		argoCDYAMLVars := struct {
-			SSHPrivateKey    string
-			GitOpsRepoB64    string
-			SourcePath       string
-			GitOpsRepo       string
-			GitOpsRepoBranch string
-			RawPathBasename  string
-			RawPath          string
+			SSHPrivateKey     string
+			GitOpsRepoB64     string
+			SourcePath        string
+			SourcePathExclude string
+			GitOpsRepo        string
+			GitOpsRepoBranch  string
+			RawPathBasename   string
+			RawPath           string
 		}{
-			SSHPrivateKey:    base64.StdEncoding.EncodeToString(secret.Data["identity"]),
-			GitOpsRepoB64:    base64.StdEncoding.EncodeToString([]byte(gitSource.Spec.URL)),
-			SourcePath:       kustomization.Spec.Path,
-			GitOpsRepo:       gitSource.Spec.URL,
-			GitOpsRepoBranch: gitSource.Spec.Reference.Branch,
-			RawPathBasename:  `'{{path.basename}}'`,
-			RawPath:          `'{{path}}'`,
+			SSHPrivateKey:     base64.StdEncoding.EncodeToString(secret.Data["identity"]),
+			GitOpsRepoB64:     base64.StdEncoding.EncodeToString([]byte(gitSource.Spec.URL)),
+			SourcePath:        sourcePath,
+			SourcePathExclude: sourcePathExclude,
+			GitOpsRepo:        gitSource.Spec.URL,
+			GitOpsRepoBranch:  gitSource.Spec.Reference.Branch,
+			RawPathBasename:   `'{{path.basename}}'`,
+			RawPath:           `'{{path}}'`,
 		}
 		//Send the YAML to stdout
 		err = utils.WriteTemplate(templates.ArgoCDMigrationYAML, argoCDYAMLVars)

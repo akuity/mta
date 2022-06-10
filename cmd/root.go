@@ -1,5 +1,5 @@
 /*
-Copyright © 2022 Christian Hernandez christian@email.com
+Copyright © 2022 Christian Hernandez christian@chernand.io
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -32,11 +32,11 @@ var rootCmd = &cobra.Command{
 	Use:   "mta",
 	Short: "This commands turns Flux Kustomizations and HelmReleases into Argo CD Applications",
 	Long: `This is a migration tool that helps you move your Flux Kustomizations and HelmReleases
-into Argo CD Applications example:
+into Argo CD ApplicationSet. Kustomization example:
 
 mta kustomization --name=mykustomization --namespace=flux-system | kubectl apply -n argocd -f -
 
-This utilty exports the named Kustomization and the source Git repo and
+This utilty exports the named Kustomization or HelmRelease and the source Git repo and
 creates a manifests to stdout, which you can pipe into an apply command
 with kubectl.`,
 }
