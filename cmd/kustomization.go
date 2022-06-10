@@ -148,22 +148,17 @@ with kubectl.`,
 
 func init() {
 	rootCmd.AddCommand(kustomizationCmd)
-
 	// Here you will define your flags and configuration settings.
 
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// kustomizationCmd.PersistentFlags().String("foo", "", "A help for foo")
 	kcf, _ := os.UserHomeDir()
 	kustomizationCmd.Flags().String("kubeconfig", kcf+"/.kube/config", "Path to the kubeconfig file to use (if not the standard one).")
-	kustomizationCmd.Flags().String("name", "", "Name of Kustomization to export")
-	kustomizationCmd.Flags().String("namespace", "", "Namespace of where the Kustomization is")
+	kustomizationCmd.Flags().String("name", "flux-system", "Name of Kustomization to export")
+	kustomizationCmd.Flags().String("namespace", "flux-system", "Namespace of where the Kustomization is")
 
 	//Require the following flags
-	kustomizationCmd.MarkFlagRequired("name")
-	kustomizationCmd.MarkFlagRequired("namespace")
+	/*
+		kustomizationCmd.MarkFlagRequired("name")
+		kustomizationCmd.MarkFlagRequired("namespace")
+	*/
 
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// kustomizationCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
