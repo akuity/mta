@@ -7,7 +7,7 @@ CD. This is in the "proof of concept" phase and I make no guarantees
 Currently working:
 
 - [x] Migrate Kustomizations
-- [ ] Migrate HelmReleases
+- [x] Migrate HelmReleases
 - [ ] Auto Scan/Migrate
 - [ ] Uninstall Flux
 
@@ -16,7 +16,7 @@ Currently working:
 Install the `mta` binary from the releases page (x64_64 currenly)
 
 ```shell
-sudo wget -O /usr/local/bin/mta https://github.com/christianh814/mta/releases/download/v0.0.1/mta-amd64-$(uname -s | tr [:upper:] [:lower:])
+sudo wget -O /usr/local/bin/mta https://github.com/christianh814/mta/releases/download/v0.0.2/mta-amd64-$(uname -s | tr [:upper:] [:lower:])
 ```
 
 Make sure it's executable
