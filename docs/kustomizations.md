@@ -99,7 +99,7 @@ flux reconcile source git flux-system
 
 Migration happens via an ApplicationSet. To see what will be created, just run the migration tool.
 
-> *NOTE* If youre Kustomizations are in a different namespace or named differnt, use `--namespace` and `--name` respectively.
+> *NOTE* If your Kustomizations are in a different namespace or named differnt, use `--namespace` and `--name` respectively.
 
 ```shell
 mta kustomization

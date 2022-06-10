@@ -38,3 +38,4 @@ mta completion bash
 Quickstarts to test the functionality after downloading the CLI
 
 * [Kustomizations](docs/kustomizations.md)
+* [HelmReleases](docs/helmreleases.md)
