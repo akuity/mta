@@ -4,7 +4,7 @@ This is a quickstart so you can test how this migration tool works.
 
 # Setup Flux
 
-If you already have Flux running, you can skip ahead. If not, you'll need to install/bootstrap Flux on to your Kubernetes cluster.
+If you already have Flux running, you can [skip ahead](#migrate). If not, you'll need to install/bootstrap Flux on to your Kubernetes cluster.
 
 You'll need
 
