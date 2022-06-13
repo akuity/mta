@@ -13,10 +13,18 @@ Currently working:
 
 # Installation
 
-Install the `mta` binary from the releases page (x64_64 currenly)
+Install the `mta` binary from the releases page
+
+__Linux/Mac OS X86_64__
 
 ```shell
 sudo wget -O /usr/local/bin/mta https://github.com/christianh814/mta/releases/download/v0.0.2/mta-amd64-$(uname -s | tr [:upper:] [:lower:])
+```
+
+__Mac OS Apple Silicon__
+
+```shell
+sudo wget -O /usr/local/bin/mta https://github.com/christianh814/mta/releases/download/v0.0.2/mta-arm64-darwin
 ```
 
 Make sure it's executable
