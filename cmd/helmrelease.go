@@ -5,7 +5,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+	http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,7 +18,6 @@ package cmd
 import (
 	"context"
 	"encoding/json"
-	"os"
 
 	yaml "sigs.k8s.io/yaml"
 
@@ -84,7 +83,7 @@ with kubectl.`,
 			log.Fatal(err)
 		}
 
-		// Get the helmchat based on type, report if error
+		// Get the helmchart based on type, report if error
 		helmRepo := &sourcev1.HelmRepository{}
 		err = k.Get(ctx, client.ObjectKey{Namespace: helmReleaseNamespace, Name: helmRelease.Spec.Chart.Spec.SourceRef.Name}, helmRepo)
 		if err != nil {
@@ -148,19 +147,5 @@ with kubectl.`,
 
 func init() {
 	rootCmd.AddCommand(helmreleaseCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// helmreleaseCmd.PersistentFlags().String("foo", "", "A help for foo")
-	kcf, _ := os.UserHomeDir()
-	helmreleaseCmd.Flags().String("kubeconfig", kcf+"/.kube/config", "Path to the kubeconfig file to use (if not the standard one).")
-	helmreleaseCmd.Flags().String("name", "", "Name of HelmRelease to export")
-	helmreleaseCmd.Flags().String("namespace", "flux-system", "Namespace of where the HelmRelease is")
-	helmreleaseCmd.MarkFlagRequired("name")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// helmreleaseCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	rootCmd.MarkPersistentFlagRequired("name")
 }

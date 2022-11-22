@@ -8,7 +8,8 @@ Currently working:
 
 - [x] Migrate Kustomizations
 - [x] Migrate HelmReleases
-- [ ] Auto Scan/Migrate
+- [x] Scan
+- [ ] Auto Migrate
 - [ ] Uninstall Flux
 
 # Installation
@@ -18,13 +19,13 @@ Install the `mta` binary from the releases page
 __Linux/Mac OS X86_64__
 
 ```shell
-sudo wget -O /usr/local/bin/mta https://github.com/christianh814/mta/releases/download/v0.0.2/mta-amd64-$(uname -s | tr [:upper:] [:lower:])
+sudo wget -O /usr/local/bin/mta https://github.com/christianh814/mta/releases/download/v0.0.3/mta-amd64-$(uname -s | tr [:upper:] [:lower:])
 ```
 
 __Mac OS Apple Silicon__
 
 ```shell
-sudo wget -O /usr/local/bin/mta https://github.com/christianh814/mta/releases/download/v0.0.2/mta-arm64-darwin
+sudo wget -O /usr/local/bin/mta https://github.com/christianh814/mta/releases/download/v0.0.3/mta-arm64-darwin
 ```
 
 Make sure it's executable

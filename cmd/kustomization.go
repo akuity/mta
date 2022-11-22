@@ -5,7 +5,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+	http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,7 +18,6 @@ package cmd
 import (
 	"context"
 	"encoding/base64"
-	"os"
 	"strings"
 
 	"github.com/christianh814/mta/pkg/utils"
@@ -148,17 +147,5 @@ with kubectl.`,
 
 func init() {
 	rootCmd.AddCommand(kustomizationCmd)
-	// Here you will define your flags and configuration settings.
-
-	kcf, _ := os.UserHomeDir()
-	kustomizationCmd.Flags().String("kubeconfig", kcf+"/.kube/config", "Path to the kubeconfig file to use (if not the standard one).")
-	kustomizationCmd.Flags().String("name", "flux-system", "Name of Kustomization to export")
-	kustomizationCmd.Flags().String("namespace", "flux-system", "Namespace of where the Kustomization is")
-
-	//Require the following flags
-	/*
-		kustomizationCmd.MarkFlagRequired("name")
-		kustomizationCmd.MarkFlagRequired("namespace")
-	*/
-
+	rootCmd.MarkPersistentFlagRequired("name")
 }
