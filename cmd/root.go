@@ -30,7 +30,7 @@ var cfgFile string
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:     "mta",
-	Version: "v0.0.3",
+	Version: "v0.0.4",
 	Short:   "This commands turns Flux Kustomizations and HelmReleases into Argo CD Applications",
 	Long: `This is a migration tool that helps you move your Flux Kustomizations and HelmReleases
 into an Argo CD ApplicationSet or Application.
@@ -70,6 +70,7 @@ func init() {
 	rootCmd.PersistentFlags().String("kubeconfig", kcf+"/.kube/config", "Path to the kubeconfig file to use (if not the standard one).")
 	rootCmd.PersistentFlags().String("name", "", "Name of Kustomization or HelmRelease to export")
 	rootCmd.PersistentFlags().String("namespace", "flux-system", "Namespace of where the Kustomization or HelmRelease is")
+	rootCmd.PersistentFlags().String("argocd-namespace", "argocd", "Namespace where Argo CD is installed")
 
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.

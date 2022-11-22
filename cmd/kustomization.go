@@ -46,6 +46,12 @@ This utilty exports the named Kustomization and the source Git repo and
 creates a manifests to stdout, which you can pipe into an apply command
 with kubectl.`,
 	Run: func(cmd *cobra.Command, args []string) {
+		// Get the Argo CD namespace
+		argoCDNamespace, err := cmd.Flags().GetString("argocd-namespace")
+		if err != nil {
+			log.Fatal(err)
+		}
+
 		// Get the options from the CLI
 		kubeConfig, err := cmd.Flags().GetString("kubeconfig")
 		if err != nil {
@@ -126,6 +132,7 @@ with kubectl.`,
 			GitOpsRepoBranch  string
 			RawPathBasename   string
 			RawPath           string
+			ArgoCDNamespace   string
 		}{
 			SSHPrivateKey:     base64.StdEncoding.EncodeToString(secret.Data["identity"]),
 			GitOpsRepoB64:     base64.StdEncoding.EncodeToString([]byte(gitSource.Spec.URL)),
@@ -135,6 +142,7 @@ with kubectl.`,
 			GitOpsRepoBranch:  gitSource.Spec.Reference.Branch,
 			RawPathBasename:   `'{{path.basename}}'`,
 			RawPath:           `'{{path}}'`,
+			ArgoCDNamespace:   argoCDNamespace,
 		}
 		//Send the YAML to stdout
 		err = utils.WriteTemplate(templates.ArgoCDAppSetMigrationYAML, argoCDYAMLVars)

@@ -46,6 +46,12 @@ This utilty exports the named HelmRelease and the source Helm repo and
 creates a manifests to stdout, which you can pipe into an apply command
 with kubectl.`,
 	Run: func(cmd *cobra.Command, args []string) {
+		// Get the Argo CD namespace
+		argoCDNamespace, err := cmd.Flags().GetString("argocd-namespace")
+		if err != nil {
+			log.Fatal(err)
+		}
+
 		// Get the options from the CLI
 		kubeConfig, err := cmd.Flags().GetString("kubeconfig")
 		if err != nil {
@@ -126,6 +132,7 @@ with kubectl.`,
 			HelmTargetRevision  string
 			HelmValues          string
 			HelmCreateNamespace string
+			ArgoCDNamespace     string
 		}{
 			HelmAppName:         helmAppName,
 			HelmAppNamespace:    helmAppNamespace,
@@ -134,6 +141,7 @@ with kubectl.`,
 			HelmTargetRevision:  helmTargetRevision,
 			HelmValues:          helmValues,
 			HelmCreateNamespace: helmCreateNamespace,
+			ArgoCDNamespace:     argoCDNamespace,
 		}
 
 		//Send the YAML to stdout

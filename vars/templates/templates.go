@@ -4,7 +4,7 @@ var ArgoCDAppSetMigrationYAML string = `apiVersion: v1
 kind: Secret
 metadata:
   name: mta-migration
-  namespace: argocd
+  namespace: {{.ArgoCDNamespace}}
   labels:
     argocd.argoproj.io/secret-type: repository
 type: Opaque
@@ -17,7 +17,7 @@ apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
   name: mta-migration
-  namespace: argocd
+  namespace: {{.ArgoCDNamespace}}
 spec:
   generators:
   - git:
@@ -57,7 +57,7 @@ var ArgoCDHelmMigrationYAML string = `apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: {{.HelmAppName}}
-  namespace: argocd
+  namespace: {{.ArgoCDNamespace}}
 spec:
   destination:
     namespace: {{.HelmAppNamespace}}
