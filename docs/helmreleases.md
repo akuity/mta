@@ -139,6 +139,7 @@ Now suspend reconciliation on Flux
 
 ```shell
 flux suspend kustomization --namespace flux-system flux-system
+flux suspend helmrelease --namespace flux-system myhelmrelease
 ```
 
 Once suspended, you can safely delete the Kustomization that Holds the HelmRelease.
