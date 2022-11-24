@@ -5,11 +5,42 @@ import (
 	"text/template"
 
 	"github.com/Masterminds/sprig/v3"
+	"github.com/christianh814/mta/pkg/argo"
 
+	apiv1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 )
+
+// GenK8SSecret generates a kubernetes secret using a clientset
+func GenK8SSecret(a argo.GitDirApplicationSet) *apiv1.Secret {
+	// Some Defaults
+	// TODO: Make these configurable
+	sName := "mta-migration"
+	sLabels := map[string]string{
+		"argocd.argoproj.io/secret-type": "repository",
+	}
+
+	sData := map[string]string{
+		"sshPrivateKey": a.SSHPrivateKey,
+		"type":          "git",
+		"url":           a.GitOpsRepo,
+	}
+
+	// Return the secret
+	return &apiv1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      sName,
+			Namespace: a.Namespace,
+			Labels:    sLabels,
+		},
+		Type:       apiv1.SecretTypeOpaque,
+		StringData: sData,
+	}
+
+}
 
 // NewDynamicClient returns a dyamnic kubernetes interface
 func NewDynamicClient(kubeConfigPath string) (dynamic.Interface, error) {

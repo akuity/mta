@@ -18,16 +18,17 @@ package cmd
 import (
 	"context"
 	"encoding/json"
+	"os"
 
 	yaml "sigs.k8s.io/yaml"
 
-	"github.com/christianh814/mta/pkg/utils"
-	"github.com/christianh814/mta/vars/templates"
+	"github.com/christianh814/mta/pkg/argo"
 	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta1"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/cli-runtime/pkg/printers"
 	"k8s.io/client-go/tools/clientcmd"
 	client "sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -108,13 +109,6 @@ with kubectl.`,
 			log.Fatal(err)
 		}
 
-		// Variables based on what we got from the cluster
-		helmAppName := helmRelease.Spec.Chart.Spec.Chart + "-" + helmRelease.Name
-		helmAppNamespace := helmRelease.Spec.TargetNamespace
-		helmChart := helmRelease.Spec.Chart.Spec.Chart
-		helmRepoUrl := helmRepo.Spec.URL
-		helmTargetRevision := helmRelease.Spec.Chart.Spec.Version
-		helmValues := string(yaml)
 		// Createnamespace comes out as a Bool, need to convert into a string
 		var helmCreateNamespace string
 		if helmRelease.Spec.Install.CreateNamespace {
@@ -123,30 +117,30 @@ with kubectl.`,
 			helmCreateNamespace = "false"
 		}
 
-		// Generate Template YAML based on things we've figured out
-		argoCDHelmYAMLVars := struct {
-			HelmAppName         string
-			HelmAppNamespace    string
-			HelmChart           string
-			HelmRepoUrl         string
-			HelmTargetRevision  string
-			HelmValues          string
-			HelmCreateNamespace string
-			ArgoCDNamespace     string
-		}{
-			HelmAppName:         helmAppName,
-			HelmAppNamespace:    helmAppNamespace,
-			HelmChart:           helmChart,
-			HelmRepoUrl:         helmRepoUrl,
-			HelmTargetRevision:  helmTargetRevision,
-			HelmValues:          helmValues,
-			HelmCreateNamespace: helmCreateNamespace,
-			ArgoCDNamespace:     argoCDNamespace,
+		// Generate the Argo CD Helm Application
+		helmApp := argo.ArgoCdHelmApplication{
+			Name:                 helmRelease.Spec.Chart.Spec.Chart + "-" + helmRelease.Name,
+			Namespace:            argoCDNamespace,
+			DestinationNamespace: helmRelease.Spec.TargetNamespace,
+			DestinationServer:    "https://kubernetes.default.svc",
+			Project:              "default",
+			HelmChart:            helmRelease.Spec.Chart.Spec.Chart,
+			HelmRepo:             helmRepo.Spec.URL,
+			HelmTargetRevision:   helmRelease.Spec.Chart.Spec.Version,
+			HelmValues:           string(yaml),
+			HelmCreateNamespace:  helmCreateNamespace,
 		}
 
-		//Send the YAML to stdout
-		err = utils.WriteTemplate(templates.ArgoCDHelmMigrationYAML, argoCDHelmYAMLVars)
+		helmArgoCdApp, err := argo.GenArgoCdHelmApplication(helmApp)
 		if err != nil {
+			log.Fatal(err)
+		}
+
+		// Set the printer type to YAML
+		printr := printers.NewTypeSetter(k.Scheme()).ToPrinter(&printers.YAMLPrinter{})
+
+		// print the AppSet YAML to Strdout
+		if err := printr.PrintObj(helmArgoCdApp, os.Stdout); err != nil {
 			log.Fatal(err)
 		}
 

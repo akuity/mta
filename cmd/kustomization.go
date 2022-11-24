@@ -17,17 +17,19 @@ package cmd
 
 import (
 	"context"
-	"encoding/base64"
+	"os"
 	"strings"
 
+	"github.com/christianh814/mta/pkg/argo"
 	"github.com/christianh814/mta/pkg/utils"
-	"github.com/christianh814/mta/vars/templates"
 	kustomizev1 "github.com/fluxcd/kustomize-controller/api/v1beta1"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta1"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/cli-runtime/pkg/printers"
 	"k8s.io/client-go/tools/clientcmd"
 	client "sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -115,38 +117,50 @@ with kubectl.`,
 		spl := strings.SplitAfter(kustomization.Spec.Path, "./")
 
 		if len(spl[1]) == 0 {
-			sourcePath = `'*'`
+			sourcePath = `*`
 			sourcePathExclude = "flux-system"
 		} else {
 			sourcePath = spl[1] + "/*"
 			sourcePathExclude = spl[1] + "/flux-system"
 		}
 
-		// Generate Template YAML based on things we've figured out
-		argoCDYAMLVars := struct {
-			SSHPrivateKey     string
-			GitOpsRepoB64     string
-			SourcePath        string
-			SourcePathExclude string
-			GitOpsRepo        string
-			GitOpsRepoBranch  string
-			RawPathBasename   string
-			RawPath           string
-			ArgoCDNamespace   string
-		}{
-			SSHPrivateKey:     base64.StdEncoding.EncodeToString(secret.Data["identity"]),
-			GitOpsRepoB64:     base64.StdEncoding.EncodeToString([]byte(gitSource.Spec.URL)),
-			SourcePath:        sourcePath,
-			SourcePathExclude: sourcePathExclude,
-			GitOpsRepo:        gitSource.Spec.URL,
-			GitOpsRepoBranch:  gitSource.Spec.Reference.Branch,
-			RawPathBasename:   `'{{path.basename}}'`,
-			RawPath:           `'{{path}}'`,
-			ArgoCDNamespace:   argoCDNamespace,
+		// Generate the ApplicationSet manifest based on the struct
+		applicationSet := argo.GitDirApplicationSet{
+			Namespace:               argoCDNamespace,
+			GitRepoURL:              gitSource.Spec.URL,
+			GitRepoRevision:         gitSource.Spec.Reference.Branch,
+			GitIncludeDir:           sourcePath,
+			GitExcludeDir:           sourcePathExclude,
+			AppName:                 "{{path.basename}}",
+			AppProject:              "default",
+			AppRepoURL:              gitSource.Spec.URL,
+			AppTargetRevision:       gitSource.Spec.Reference.Branch,
+			AppPath:                 "{{path}}",
+			AppDestinationServer:    "https://kubernetes.default.svc",
+			AppDestinationNamespace: kustomization.Spec.TargetNamespace,
+			SSHPrivateKey:           string(secret.Data["identity"]),
+			GitOpsRepo:              gitSource.Spec.URL,
 		}
-		//Send the YAML to stdout
-		err = utils.WriteTemplate(templates.ArgoCDAppSetMigrationYAML, argoCDYAMLVars)
+
+		appset, err := argo.GenGitDirAppSet(applicationSet)
 		if err != nil {
+			log.Fatal(err)
+		}
+
+		// Generate the ApplicationSet Secret and set the GVK
+		appsetSecret := utils.GenK8SSecret(applicationSet)
+		appsetSecret.SetGroupVersionKind(schema.GroupVersionKind{}.GroupKind().WithVersion("v1").GroupVersion().WithKind("Secret"))
+
+		// Set the printer type to YAML
+		printr := printers.NewTypeSetter(k.Scheme()).ToPrinter(&printers.YAMLPrinter{})
+
+		// Print the AppSet secret to Stdout
+		if err := printr.PrintObj(appsetSecret, os.Stdout); err != nil {
+			log.Fatal(err)
+		}
+
+		// print the AppSet YAML to Strdout
+		if err := printr.PrintObj(appset, os.Stdout); err != nil {
 			log.Fatal(err)
 		}
 
