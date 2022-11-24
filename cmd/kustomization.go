@@ -28,7 +28,6 @@ import (
 	"github.com/spf13/cobra"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/cli-runtime/pkg/printers"
 	"k8s.io/client-go/tools/clientcmd"
 	client "sigs.k8s.io/controller-runtime/pkg/client"
@@ -149,7 +148,6 @@ with kubectl.`,
 
 		// Generate the ApplicationSet Secret and set the GVK
 		appsetSecret := utils.GenK8SSecret(applicationSet)
-		appsetSecret.SetGroupVersionKind(schema.GroupVersionKind{}.GroupKind().WithVersion("v1").GroupVersion().WithKind("Secret"))
 
 		// Set the printer type to YAML
 		printr := printers.NewTypeSetter(k.Scheme()).ToPrinter(&printers.YAMLPrinter{})

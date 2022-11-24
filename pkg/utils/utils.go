@@ -29,8 +29,8 @@ func GenK8SSecret(a argo.GitDirApplicationSet) *apiv1.Secret {
 		"url":           a.GitOpsRepo,
 	}
 
-	// Return the secret
-	return &apiv1.Secret{
+	// Create the secret
+	s := &apiv1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      sName,
 			Namespace: a.Namespace,
@@ -39,6 +39,12 @@ func GenK8SSecret(a argo.GitDirApplicationSet) *apiv1.Secret {
 		Type:       apiv1.SecretTypeOpaque,
 		StringData: sData,
 	}
+
+	// set the gvk for the secret
+	s.SetGroupVersionKind(apiv1.SchemeGroupVersion.WithKind("Secret"))
+
+	// Return the secret
+	return s
 
 }
 
