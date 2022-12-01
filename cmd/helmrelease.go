@@ -20,9 +20,11 @@ import (
 	"encoding/json"
 	"os"
 
+	argov1alpha1 "github.com/argoproj/argo-cd/v2/pkg/apis/application/v1alpha1"
 	yaml "sigs.k8s.io/yaml"
 
 	"github.com/christianh814/mta/pkg/argo"
+	"github.com/christianh814/mta/pkg/utils"
 	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta1"
 	log "github.com/sirupsen/logrus"
@@ -60,6 +62,7 @@ with kubectl.`,
 		}
 		helmReleaseName, _ := cmd.Flags().GetString("name")
 		helmReleaseNamespace, _ := cmd.Flags().GetString("namespace")
+		confirmMigrate, _ := cmd.Flags().GetBool("confirm-migrate")
 
 		// Set up the default context
 		ctx := context.TODO()
@@ -68,6 +71,7 @@ with kubectl.`,
 		scheme := runtime.NewScheme()
 		helmv2.AddToScheme(scheme)
 		sourcev1.AddToScheme(scheme)
+		argov1alpha1.AddToScheme(scheme)
 
 		// create rest config using the kubeconfig file.
 		restConfig, err := clientcmd.BuildConfigFromFlags("", kubeConfig)
@@ -136,12 +140,21 @@ with kubectl.`,
 			log.Fatal(err)
 		}
 
-		// Set the printer type to YAML
-		printr := printers.NewTypeSetter(k.Scheme()).ToPrinter(&printers.YAMLPrinter{})
+		// Do the migration automatically if that is set, if not print to stdout
+		if confirmMigrate {
+			log.Info("Migrating HelmRelease to Argo CD via an Application")
+			// TODO: Suspend reconcilation
+			if err := utils.MigrateToArgoCD(k, ctx, helmArgoCdApp); err != nil {
+				log.Fatal(err)
+			}
+		} else {
+			// Set the printer type to YAML
+			printr := printers.NewTypeSetter(k.Scheme()).ToPrinter(&printers.YAMLPrinter{})
 
-		// print the AppSet YAML to Strdout
-		if err := printr.PrintObj(helmArgoCdApp, os.Stdout); err != nil {
-			log.Fatal(err)
+			// print the AppSet YAML to Strdout
+			if err := printr.PrintObj(helmArgoCdApp, os.Stdout); err != nil {
+				log.Fatal(err)
+			}
 		}
 
 	},
@@ -150,4 +163,6 @@ with kubectl.`,
 func init() {
 	rootCmd.AddCommand(helmreleaseCmd)
 	rootCmd.MarkPersistentFlagRequired("name")
+
+	helmreleaseCmd.Flags().Bool("confirm-migrate", false, "Automatically Migrate the HelmRelease to an ApplicationSet")
 }

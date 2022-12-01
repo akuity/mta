@@ -20,12 +20,14 @@ import (
 	"os"
 	"strings"
 
+	argov1alpha1 "github.com/argoproj/argo-cd/v2/pkg/apis/application/v1alpha1"
 	"github.com/christianh814/mta/pkg/argo"
 	"github.com/christianh814/mta/pkg/utils"
 	kustomizev1 "github.com/fluxcd/kustomize-controller/api/v1beta1"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta1"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/cli-runtime/pkg/printers"
@@ -60,14 +62,17 @@ with kubectl.`,
 		}
 		kustomizationName, _ := cmd.Flags().GetString("name")
 		kustomizationNamespace, _ := cmd.Flags().GetString("namespace")
+		confirmMigrate, _ := cmd.Flags().GetBool("confirm-migrate")
 
 		// Set up the default context
 		ctx := context.TODO()
 
-		// Set up the schema because Kustomization and GitRepo is a CRD
+		// Set up the scheme of components we need
 		scheme := runtime.NewScheme()
 		kustomizev1.AddToScheme(scheme)
 		sourcev1.AddToScheme(scheme)
+		corev1.AddToScheme(scheme)
+		argov1alpha1.AddToScheme(scheme)
 
 		// create rest config using the kubeconfig file.
 		restConfig, err := clientcmd.BuildConfigFromFlags("", kubeConfig)
@@ -149,17 +154,31 @@ with kubectl.`,
 		// Generate the ApplicationSet Secret and set the GVK
 		appsetSecret := utils.GenK8SSecret(applicationSet)
 
-		// Set the printer type to YAML
-		printr := printers.NewTypeSetter(k.Scheme()).ToPrinter(&printers.YAMLPrinter{})
+		// Do the migration automatically if that is set, if not print to stdout
+		if confirmMigrate {
+			// create the Secret and Applicationset
+			// TODO: Suspend reconcilation
+			log.Info("Migrating Kustomization to ArgoCD via ApplicationSet")
+			if err := utils.MigrateToArgoCD(k, ctx, appsetSecret, appset); err != nil {
+				log.Fatal(err)
+			}
 
-		// Print the AppSet secret to Stdout
-		if err := printr.PrintObj(appsetSecret, os.Stdout); err != nil {
-			log.Fatal(err)
-		}
+		} else {
+			// Print the ApplicationSet and Secret to stdout
 
-		// print the AppSet YAML to Strdout
-		if err := printr.PrintObj(appset, os.Stdout); err != nil {
-			log.Fatal(err)
+			// Set the printer type to YAML
+			printr := printers.NewTypeSetter(k.Scheme()).ToPrinter(&printers.YAMLPrinter{})
+
+			// Print the AppSet secret to Stdout
+			if err := printr.PrintObj(appsetSecret, os.Stdout); err != nil {
+				log.Fatal(err)
+			}
+
+			// print the AppSet YAML to Strdout
+			if err := printr.PrintObj(appset, os.Stdout); err != nil {
+				log.Fatal(err)
+			}
+
 		}
 
 	},
@@ -168,4 +187,6 @@ with kubectl.`,
 func init() {
 	rootCmd.AddCommand(kustomizationCmd)
 	rootCmd.MarkPersistentFlagRequired("name")
+
+	kustomizationCmd.Flags().Bool("confirm-migrate", false, "Automatically Migrate the Kustomization to an ApplicationSet")
 }

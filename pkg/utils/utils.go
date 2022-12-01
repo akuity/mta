@@ -51,6 +51,7 @@ func GenK8SSecret(a argo.GitDirApplicationSet) *apiv1.Secret {
 }
 
 // MigrateToArgoCD Creates Argo CD Applications
+// IT ACTUALLY JUST, GENERICALLY, CREATES K8S OBJECTS BASED ON THE SCHEMA PASSED IN THE CLIENT AND WHAT IS IN THE OBJECT
 func MigrateToArgoCD(c client.Client, ctx context.Context, obj ...client.Object) error {
 	// Migrate the objects
 	for _, o := range obj {

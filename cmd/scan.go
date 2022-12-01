@@ -89,6 +89,12 @@ displays the results.
 		// Automigrate if the flag is set, otherwise just display the table
 		if autoMigrate {
 			log.Warn("Automigrate is not yet implemented")
+			//log.Warn("Only doing Kustomizations")
+			/*
+				for _, k := range kustomizationList.Items {
+					kustomizationCmd.Run(kustomizationCmd, []string{"--name", k.Name, "--namespace", k.Namespace, "--confirm-migrate"})
+				}
+			*/
 		} else {
 
 			// Set up table
