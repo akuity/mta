@@ -142,7 +142,7 @@ with kubectl.`,
 
 		// Do the migration automatically if that is set, if not print to stdout
 		if confirmMigrate {
-			log.Info("Migrating HelmRelease to Argo CD via an Application")
+			log.Info("Migrating HelmRelease \"" + helmRelease.Name + "\" to Argo CD via an Application")
 			// TODO: Suspend reconcilation
 			if err := utils.MigrateToArgoCD(k, ctx, helmArgoCdApp); err != nil {
 				log.Fatal(err)

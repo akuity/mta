@@ -158,7 +158,7 @@ with kubectl.`,
 		if confirmMigrate {
 			// create the Secret and Applicationset
 			// TODO: Suspend reconcilation
-			log.Info("Migrating Kustomization to ArgoCD via ApplicationSet")
+			log.Info("Migrating Kustomization \"" + kustomization.Name + "\" to ArgoCD via an ApplicationSet")
 			if err := utils.MigrateToArgoCD(k, ctx, appsetSecret, appset); err != nil {
 				log.Fatal(err)
 			}
