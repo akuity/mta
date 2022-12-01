@@ -1,11 +1,13 @@
 package utils
 
 import (
+	"context"
 	"os"
 	"text/template"
 
 	"github.com/Masterminds/sprig/v3"
 	"github.com/christianh814/mta/pkg/argo"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -46,6 +48,19 @@ func GenK8SSecret(a argo.GitDirApplicationSet) *apiv1.Secret {
 	// Return the secret
 	return s
 
+}
+
+// MigrateToArgoCD Creates Argo CD Applications
+func MigrateToArgoCD(c client.Client, ctx context.Context, obj ...client.Object) error {
+	// Migrate the objects
+	for _, o := range obj {
+		if err := c.Create(ctx, o); err != nil {
+			return err
+		}
+	}
+
+	// If we're here, it should have gone okay...
+	return nil
 }
 
 // NewDynamicClient returns a dyamnic kubernetes interface

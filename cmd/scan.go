@@ -38,16 +38,17 @@ var scanCmd = &cobra.Command{
 displays the results.
 `,
 	Run: func(cmd *cobra.Command, args []string) {
-		// Set up table
-		t := table.NewWriter()
-		t.SetOutputMirror(os.Stdout)
-		t.AppendHeader(table.Row{"Kind", "Name", "Namespace", "Status"})
-
 		// Set up the default context
 		ctx := context.TODO()
 
 		// Get the Kubeconfig to use
 		kubeConfig, err := cmd.Flags().GetString("kubeconfig")
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		// Get automigrate option from the cli
+		autoMigrate, err := cmd.Flags().GetBool("auto-migrate")
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -79,32 +80,50 @@ displays the results.
 			log.Fatal(err)
 		}
 
-		// Add all Helm Releases to the table
-		for _, hr := range helmReleaseList.Items {
-			t.AppendRow(table.Row{"HelmRelease", hr.Name, hr.Namespace, hr.Status.Conditions[0].Message})
-		}
-
-		// Add a separotor to the table
-		t.AppendSeparator()
-
 		// Get all Kustomizations in the cluster
 		kustomizationList := &kustomizev1.KustomizationList{}
 		if err = k.List(ctx, kustomizationList); err != nil {
 			log.Fatal(err)
 		}
 
-		// Add all Kustomizations to the table
-		for _, k := range kustomizationList.Items {
-			t.AppendRow(table.Row{"Kustomization", k.Name, k.Namespace, k.Status.Conditions[0].Message})
-		}
+		// Automigrate if the flag is set, otherwise just display the table
+		if autoMigrate {
+			log.Warn("Automigrate is not yet implemented")
+		} else {
 
-		//Render the table to the console
-		t.SetStyle(table.StyleLight)
-		t.Render()
+			// Set up table
+			t := table.NewWriter()
+			t.SetOutputMirror(os.Stdout)
+			t.AppendHeader(table.Row{"Kind", "Name", "Namespace", "Status"})
+
+			// Add all Helm Releases to the table
+			for _, hr := range helmReleaseList.Items {
+				// TESTING SUSPEND
+				////hr.Spec.Suspend = true
+				////k.Update(ctx, &hr)
+				//
+				t.AppendRow(table.Row{hr.Kind, hr.Name, hr.Namespace, hr.Status.Conditions[0].Message})
+			}
+
+			// Add a separotor to the table
+			t.AppendSeparator()
+
+			// Add all Kustomizations to the table
+			for _, k := range kustomizationList.Items {
+				t.AppendRow(table.Row{k.Kind, k.Name, k.Namespace, k.Status.Conditions[0].Message})
+			}
+
+			//Render the table to the console
+			t.SetStyle(table.StyleLight)
+			t.Render()
+
+		}
 
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(scanCmd)
+
+	scanCmd.Flags().Bool("auto-migrate", false, "Automatically migrate HelmReleases and Kustomizations to Argo CD")
 }
