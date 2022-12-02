@@ -28,8 +28,8 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	corev1 "k8s.io/api/core/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/cli-runtime/pkg/printers"
 	"k8s.io/client-go/tools/clientcmd"
 	client "sigs.k8s.io/controller-runtime/pkg/client"
@@ -88,30 +88,25 @@ with kubectl.`,
 			log.Fatal(err)
 		}
 
-		// Create a standard client to get the secret from the Core API later
-		sc, err := utils.NewClient(kubeConfig)
-		if err != nil {
-			log.Fatal(err)
-		}
-
 		// get the kustomization based on the type, report if there's an error
 		kustomization := &kustomizev1.Kustomization{}
-		err = k.Get(ctx, client.ObjectKey{Namespace: kustomizationNamespace, Name: kustomizationName}, kustomization)
+		err = k.Get(ctx, types.NamespacedName{Namespace: kustomizationNamespace, Name: kustomizationName}, kustomization)
 		if err != nil {
 			log.Fatal(err)
 		}
 
 		// get the gitsource
 		gitSource := &sourcev1.GitRepository{}
-		err = k.Get(ctx, client.ObjectKey{Namespace: kustomizationNamespace, Name: kustomizationName}, gitSource)
+		err = k.Get(ctx, types.NamespacedName{Namespace: kustomizationNamespace, Name: kustomizationName}, gitSource)
 		if err != nil {
 			log.Fatal(err)
 		}
 
 		//Get the secret holding the info we need
-		secret, err := sc.CoreV1().Secrets(kustomizationNamespace).Get(ctx, gitSource.Spec.SecretRef.Name, v1.GetOptions{})
+		secret := &corev1.Secret{}
+		err = k.Get(ctx, types.NamespacedName{Namespace: kustomizationNamespace, Name: gitSource.Spec.SecretRef.Name}, secret)
 		if err != nil {
-			log.Fatal()
+			log.Fatal(err)
 		}
 
 		//	Argo CD ApplicationSet is sensitive about how you give it paths in the Git Dir generator. We need to figure some things out
@@ -156,10 +151,13 @@ with kubectl.`,
 
 		// Do the migration automatically if that is set, if not print to stdout
 		if confirmMigrate {
-			// create the Secret and Applicationset
-			// TODO: Suspend reconcilation
+			// Suspend reconcilation
+			kustomization.Spec.Suspend = true
+			k.Update(ctx, kustomization)
+
+			// Finally, create the ApplicationSet with the ApplicationSet Secret
 			log.Info("Migrating Kustomization \"" + kustomization.Name + "\" to ArgoCD via an ApplicationSet")
-			if err := utils.MigrateToArgoCD(k, ctx, appsetSecret, appset); err != nil {
+			if err := utils.CreateK8SObjects(k, ctx, appsetSecret, appset); err != nil {
 				log.Fatal(err)
 			}
 

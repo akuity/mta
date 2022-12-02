@@ -17,8 +17,8 @@ package cmd
 
 import (
 	"context"
-	"encoding/json"
 	"os"
+	"strconv"
 
 	argov1alpha1 "github.com/argoproj/argo-cd/v2/pkg/apis/application/v1alpha1"
 	yaml "sigs.k8s.io/yaml"
@@ -30,6 +30,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/cli-runtime/pkg/printers"
 	"k8s.io/client-go/tools/clientcmd"
 	client "sigs.k8s.io/controller-runtime/pkg/client"
@@ -89,41 +90,28 @@ with kubectl.`,
 
 		//Get the helmrelease based on type, report if there's an error
 		helmRelease := &helmv2.HelmRelease{}
-		err = k.Get(ctx, client.ObjectKey{Namespace: helmReleaseNamespace, Name: helmReleaseName}, helmRelease)
+		err = k.Get(ctx, types.NamespacedName{Namespace: helmReleaseNamespace, Name: helmReleaseName}, helmRelease)
 		if err != nil {
 			log.Fatal(err)
 		}
 
 		// Get the helmchart based on type, report if error
 		helmRepo := &sourcev1.HelmRepository{}
-		err = k.Get(ctx, client.ObjectKey{Namespace: helmReleaseNamespace, Name: helmRelease.Spec.Chart.Spec.SourceRef.Name}, helmRepo)
+		err = k.Get(ctx, types.NamespacedName{Namespace: helmReleaseNamespace, Name: helmRelease.Spec.Chart.Spec.SourceRef.Name}, helmRepo)
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		// The Values to the Helm chart output is in JSON
-		json, err := json.Marshal(helmRelease.Spec.Values)
+		// Get the Values from the HelmRelease
+		yaml, err := yaml.Marshal(helmRelease.Spec.Values)
 		if err != nil {
 			log.Fatal(err)
-		}
-
-		//Convert JSON Values to YAML
-		yaml, err := yaml.JSONToYAML(json)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		// Createnamespace comes out as a Bool, need to convert into a string
-		var helmCreateNamespace string
-		if helmRelease.Spec.Install.CreateNamespace {
-			helmCreateNamespace = "true"
-		} else {
-			helmCreateNamespace = "false"
 		}
 
 		// Generate the Argo CD Helm Application
 		helmApp := argo.ArgoCdHelmApplication{
-			Name:                 helmRelease.Spec.Chart.Spec.Chart + "-" + helmRelease.Name,
+			//Name:                 helmRelease.Spec.Chart.Spec.Chart + "-" + helmRelease.Name,
+			Name:                 helmRelease.Name,
 			Namespace:            argoCDNamespace,
 			DestinationNamespace: helmRelease.Spec.TargetNamespace,
 			DestinationServer:    "https://kubernetes.default.svc",
@@ -132,7 +120,7 @@ with kubectl.`,
 			HelmRepo:             helmRepo.Spec.URL,
 			HelmTargetRevision:   helmRelease.Spec.Chart.Spec.Version,
 			HelmValues:           string(yaml),
-			HelmCreateNamespace:  helmCreateNamespace,
+			HelmCreateNamespace:  strconv.FormatBool(helmRelease.Spec.Install.CreateNamespace),
 		}
 
 		helmArgoCdApp, err := argo.GenArgoCdHelmApplication(helmApp)
@@ -143,8 +131,12 @@ with kubectl.`,
 		// Do the migration automatically if that is set, if not print to stdout
 		if confirmMigrate {
 			log.Info("Migrating HelmRelease \"" + helmRelease.Name + "\" to Argo CD via an Application")
-			// TODO: Suspend reconcilation
-			if err := utils.MigrateToArgoCD(k, ctx, helmArgoCdApp); err != nil {
+			// Suspend reconcilation
+			helmRelease.Spec.Suspend = true
+			k.Update(ctx, helmRelease)
+
+			// Finally, create the Argo CD Application
+			if err := utils.CreateK8SObjects(k, ctx, helmArgoCdApp); err != nil {
 				log.Fatal(err)
 			}
 		} else {

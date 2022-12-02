@@ -1,7 +1,13 @@
 package argo
 
 import (
+	"context"
+
 	v1alpha1 "github.com/argoproj/argo-cd/v2/pkg/apis/application/v1alpha1"
+	apiv1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // ArgoCdGitApplicationSet is a struct that holds the ArgoCD Git ApplicationSet
@@ -143,4 +149,18 @@ func GenGitDirAppSet(appSet GitDirApplicationSet) (*v1alpha1.ApplicationSet, err
 
 	// Return ApplicationSet
 	return as, nil
+}
+
+// IsArgoRunning checks if ArgoCD is running. Best effort as it just checks to see if the namespace exists
+func IsArgoRunning(client client.Client, ns string) bool {
+	// If we can't fine the namespace, return false
+	namespaceobj := &apiv1.Namespace{}
+	err := client.Get(context.Background(), types.NamespacedName{Name: ns}, namespaceobj)
+
+	if err != nil && apierrors.IsNotFound(err) {
+		return false
+	}
+
+	// If we're here we should be okay
+	return true
 }

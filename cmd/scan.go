@@ -19,12 +19,17 @@ import (
 	"context"
 	"os"
 
+	argov1alpha1 "github.com/argoproj/argo-cd/v2/pkg/apis/application/v1alpha1"
+	"github.com/christianh814/mta/pkg/argo"
+	"github.com/christianh814/mta/pkg/utils"
+	fluxlog "github.com/fluxcd/flux2/pkg/log"
 	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
 	kustomizev1 "github.com/fluxcd/kustomize-controller/api/v1beta1"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta1"
 	"github.com/jedib0t/go-pretty/v6/table"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/clientcmd"
 	client "sigs.k8s.io/controller-runtime/pkg/client"
@@ -53,12 +58,20 @@ displays the results.
 			log.Fatal(err)
 		}
 
+		// Get the Argo CD namespace in case of auto-migrate
+		argoCDNamespace, err := cmd.Flags().GetString("argocd-namespace")
+		if err != nil {
+			log.Fatal(err)
+		}
+
 		// Set up the schema because HelmRelease and Kustomization are CRDs
 		kScheme := runtime.NewScheme()
 		kustomizev1.AddToScheme(kScheme)
 		sourcev1.AddToScheme(kScheme)
 		helmv2.AddToScheme(kScheme)
 		sourcev1.AddToScheme(kScheme)
+		corev1.AddToScheme(kScheme)
+		argov1alpha1.AddToScheme(kScheme)
 
 		// create rest config using the kubeconfig file.
 		restConfig, err := clientcmd.BuildConfigFromFlags("", kubeConfig)
@@ -88,13 +101,34 @@ displays the results.
 
 		// Automigrate if the flag is set, otherwise just display the table
 		if autoMigrate {
-			log.Warn("Automigrate is not yet implemented")
-			//log.Warn("Only doing Kustomizations")
-			/*
-				for _, k := range kustomizationList.Items {
-					kustomizationCmd.Run(kustomizationCmd, []string{"--name", k.Name, "--namespace", k.Namespace, "--confirm-migrate"})
+			// TODO: Prompt the user to confirm the migration
+
+			// Check if Argo CD is installed/running
+			if !argo.IsArgoRunning(k, argoCDNamespace) {
+				log.Fatal("Argo CD is not installed or running")
+			}
+
+			// Migrate Kustomizations
+			for _, kl := range kustomizationList.Items {
+				log.Info("Migrating Kustomization ", kl.Name)
+				if err := utils.MigrateKustomizationToApplicationSet(k, ctx, argoCDNamespace, kl); err != nil {
+					log.Fatal(err)
 				}
-			*/
+			}
+
+			// Migrate HelmReleases
+			for _, hl := range helmReleaseList.Items {
+				log.Info("Migrating HelmRelease ", hl.Name)
+				if err := utils.MigrateHelmReleaseToApplication(k, ctx, argoCDNamespace, hl); err != nil {
+					log.Fatal(err)
+				}
+			}
+
+			// Once we're done, we can uninstall Flux
+			log.Info("Uninstalling Flux")
+			if err := utils.FluxCleanUp(k, ctx, fluxlog.NopLogger{}, "flux-system"); err != nil {
+				log.Fatal(err)
+			}
 		} else {
 
 			// Set up table
@@ -131,5 +165,5 @@ displays the results.
 func init() {
 	rootCmd.AddCommand(scanCmd)
 
-	scanCmd.Flags().Bool("auto-migrate", false, "Automatically migrate HelmReleases and Kustomizations to Argo CD")
+	scanCmd.Flags().Bool("auto-migrate", false, "Automatically migrate HelmReleases and Kustomizations to Argo CD and uninstalls Flux")
 }
