@@ -30,7 +30,7 @@ var cfgFile string
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:     "mta",
-	Version: "v0.0.5",
+	Version: "v0.0.6",
 	Short:   "This commands turns Flux Kustomizations and HelmReleases into Argo CD Applications",
 	Long: `This is a migration tool that helps you move your Flux Kustomizations and HelmReleases
 into an Argo CD ApplicationSet or Application.

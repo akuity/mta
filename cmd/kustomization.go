@@ -38,7 +38,7 @@ import (
 // kustomizationCmd represents the kustomization command
 var kustomizationCmd = &cobra.Command{
 	Use:     "kustomization",
-	Aliases: []string{"k"},
+	Aliases: []string{"k", "kustomizations"},
 	Short:   "Exports a Kustomization into an ApplicationSet",
 	Long: `This is a migration tool that helps you move your Flux Kustomizations
 into an Argo CD ApplicationSet. Example:

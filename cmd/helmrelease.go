@@ -39,7 +39,7 @@ import (
 // helmreleaseCmd represents the helmrelease command
 var helmreleaseCmd = &cobra.Command{
 	Use:     "helmrelease",
-	Aliases: []string{"HelmRelease", "hr"},
+	Aliases: []string{"HelmRelease", "hr", "helmreleases"},
 	Short:   "Exports a HelmRelease into an Application",
 	Long: `This migration tool helps you move your Flux HelmReleases into Argo CD
 Applications. Example:
