@@ -92,40 +92,6 @@ func MigrateKustomizationToApplicationSet(client client.Client, ctx context.Cont
 	return nil
 }
 
-// GenK8SSecret generates a kubernetes secret using a clientset
-func GenK8SSecret(a argo.GitDirApplicationSet) *apiv1.Secret {
-	// Some Defaults
-	// TODO: Make these configurable
-	sName := "mta-migration"
-	sLabels := map[string]string{
-		"argocd.argoproj.io/secret-type": "repository",
-	}
-
-	sData := map[string]string{
-		"sshPrivateKey": a.SSHPrivateKey,
-		"type":          "git",
-		"url":           a.GitOpsRepo,
-	}
-
-	// Create the secret
-	s := &apiv1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      sName,
-			Namespace: a.Namespace,
-			Labels:    sLabels,
-		},
-		Type:       apiv1.SecretTypeOpaque,
-		StringData: sData,
-	}
-
-	// set the gvk for the secret
-	s.SetGroupVersionKind(apiv1.SchemeGroupVersion.WithKind("Secret"))
-
-	// Return the secret
-	return s
-
-}
-
 // MigrateHelmReleaseToApplication migrates a HelmRelease to an Argo CD Application
 func MigrateHelmReleaseToApplication(client client.Client, ctx context.Context, ans string, h helmv2.HelmRelease) error {
 	// Get the helmchart based on type, report if error
@@ -222,4 +188,38 @@ func CreateK8SObjects(c client.Client, ctx context.Context, obj ...client.Object
 
 	// If we're here, it should have gone okay...
 	return nil
+}
+
+// GenK8SSecret generates a kubernetes secret using a clientset
+func GenK8SSecret(a argo.GitDirApplicationSet) *apiv1.Secret {
+	// Some Defaults
+	// TODO: Make these configurable
+	sName := "mta-migration"
+	sLabels := map[string]string{
+		"argocd.argoproj.io/secret-type": "repository",
+	}
+
+	sData := map[string]string{
+		"sshPrivateKey": a.SSHPrivateKey,
+		"type":          "git",
+		"url":           a.GitOpsRepo,
+	}
+
+	// Create the secret
+	s := &apiv1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      sName,
+			Namespace: a.Namespace,
+			Labels:    sLabels,
+		},
+		Type:       apiv1.SecretTypeOpaque,
+		StringData: sData,
+	}
+
+	// set the gvk for the secret
+	s.SetGroupVersionKind(apiv1.SchemeGroupVersion.WithKind("Secret"))
+
+	// Return the secret
+	return s
+
 }
