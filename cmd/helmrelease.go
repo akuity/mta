@@ -110,8 +110,8 @@ with kubectl.`,
 
 		// Generate the Argo CD Helm Application
 		helmApp := argo.ArgoCdHelmApplication{
-			//Name:                 helmRelease.Spec.Chart.Spec.Chart + "-" + helmRelease.Name,
-			Name:                 helmRelease.Name,
+			//Name:                 helmRelease.Name,
+			Name:                 helmRelease.Spec.TargetNamespace + "-" + helmRelease.Name,
 			Namespace:            argoCDNamespace,
 			DestinationNamespace: helmRelease.Spec.TargetNamespace,
 			DestinationServer:    "https://kubernetes.default.svc",

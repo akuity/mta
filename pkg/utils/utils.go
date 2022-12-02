@@ -142,8 +142,7 @@ func MigrateHelmReleaseToApplication(client client.Client, ctx context.Context, 
 
 	// Generate the Argo CD Helm Application
 	helmApp := argo.ArgoCdHelmApplication{
-		//Name:                 helmRelease.Spec.Chart.Spec.Chart + "-" + helmRelease.Name,
-		Name:                 h.Name,
+		Name:                 h.Spec.TargetNamespace + "-" + h.Name,
 		Namespace:            ans,
 		DestinationNamespace: h.Spec.TargetNamespace,
 		DestinationServer:    "https://kubernetes.default.svc",
