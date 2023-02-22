@@ -27,6 +27,7 @@ import (
 	kustomizev1 "github.com/fluxcd/kustomize-controller/api/v1beta1"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta1"
 	"github.com/jedib0t/go-pretty/v6/table"
+	"github.com/manifoldco/promptui"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	corev1 "k8s.io/api/core/v1"
@@ -54,6 +55,11 @@ displays the results.
 
 		// Get automigrate option from the cli
 		autoMigrate, err := cmd.Flags().GetBool("auto-migrate")
+		if err != nil {
+			log.Fatal(err)
+		}
+		// Get automigrate option from the cli
+		confirmMigrate, err := cmd.Flags().GetBool("confirm")
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -101,7 +107,23 @@ displays the results.
 
 		// Automigrate if the flag is set, otherwise just display the table
 		if autoMigrate {
-			// TODO: Prompt the user to confirm the migration
+			// Prompt user to confirm migration
+			if !confirmMigrate {
+				prompt := promptui.Prompt{
+					Label:     "Are you sure you want to migrate to Argo CD and uninstall Flux?",
+					IsConfirm: true,
+				}
+
+				_, err := prompt.Run()
+
+				if err != nil {
+					log.Info("Automigration Cancelled")
+					os.Exit(0)
+				}
+			} else {
+				// Confirmation of migration has been confirmed
+				log.Info("Auto-migration confirmed")
+			}
 
 			// Check if Argo CD is installed/running
 			if !argo.IsArgoRunning(k, argoCDNamespace) {
@@ -165,5 +187,6 @@ displays the results.
 func init() {
 	rootCmd.AddCommand(scanCmd)
 
-	scanCmd.Flags().Bool("auto-migrate", false, "Automatically migrate HelmReleases and Kustomizations to Argo CD and uninstalls Flux")
+	scanCmd.Flags().Bool("auto-migrate", false, "Migrate HelmReleases and Kustomizations to Argo CD and uninstalls Flux")
+	scanCmd.Flags().Bool("confirm", false, "Confirm migraton to Argo CD and uninstalls Flux")
 }
