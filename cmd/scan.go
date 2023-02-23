@@ -160,10 +160,6 @@ displays the results.
 
 			// Add all Helm Releases to the table
 			for _, hr := range helmReleaseList.Items {
-				// TESTING SUSPEND
-				////hr.Spec.Suspend = true
-				////k.Update(ctx, &hr)
-				//
 				t.AppendRow(table.Row{hr.Kind, hr.Name, hr.Namespace, hr.Status.Conditions[0].Message})
 			}
 

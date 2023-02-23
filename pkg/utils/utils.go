@@ -4,6 +4,7 @@ import (
 	"context"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/christianh814/mta/pkg/argo"
 	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
@@ -21,11 +22,11 @@ import (
 )
 
 // MigrateKustomizationToApplicationSet migrates a Kustomization to an Argo CD ApplicationSet
-func MigrateKustomizationToApplicationSet(client client.Client, ctx context.Context, ans string, k kustomizev1.Kustomization) error {
+func MigrateKustomizationToApplicationSet(c client.Client, ctx context.Context, ans string, k kustomizev1.Kustomization) error {
 	// Get the GitRepository from the Kustomization
 	// get the gitsource
 	gitSource := &sourcev1.GitRepository{}
-	err := client.Get(ctx, types.NamespacedName{Namespace: k.Namespace, Name: k.Name}, gitSource)
+	err := c.Get(ctx, types.NamespacedName{Namespace: k.Namespace, Name: k.Name}, gitSource)
 	if err != nil {
 		return err
 	}
@@ -33,7 +34,7 @@ func MigrateKustomizationToApplicationSet(client client.Client, ctx context.Cont
 	//Get the secret holding the info we need
 	//secret, err := _.CoreV1().Secrets(k.Namespace).Get(ctx, gitSource.Spec.SecretRef.Name, v1.GetOptions{})
 	secret := &apiv1.Secret{}
-	err = client.Get(ctx, types.NamespacedName{Namespace: k.Namespace, Name: gitSource.Spec.SecretRef.Name}, secret)
+	err = c.Get(ctx, types.NamespacedName{Namespace: k.Namespace, Name: gitSource.Spec.SecretRef.Name}, secret)
 	if err != nil {
 		return err
 	}
@@ -78,13 +79,12 @@ func MigrateKustomizationToApplicationSet(client client.Client, ctx context.Cont
 	// Generate the ApplicationSet Secret and set the GVK
 	appsetSecret := GenK8SSecret(applicationSet)
 
-	// Create the Application on the cluster
 	// Suspend reconcilation
 	k.Spec.Suspend = true
-	client.Update(ctx, &k)
+	c.Update(ctx, &k)
 
 	// Finally, create the Argo CD Application
-	if err := CreateK8SObjects(client, ctx, appsetSecret, appset); err != nil {
+	if err := CreateK8SObjects(c, ctx, appsetSecret, appset); err != nil {
 		return err
 	}
 
@@ -93,10 +93,10 @@ func MigrateKustomizationToApplicationSet(client client.Client, ctx context.Cont
 }
 
 // MigrateHelmReleaseToApplication migrates a HelmRelease to an Argo CD Application
-func MigrateHelmReleaseToApplication(client client.Client, ctx context.Context, ans string, h helmv2.HelmRelease) error {
+func MigrateHelmReleaseToApplication(c client.Client, ctx context.Context, ans string, h helmv2.HelmRelease) error {
 	// Get the helmchart based on type, report if error
 	helmRepo := &sourcev1.HelmRepository{}
-	err := client.Get(ctx, types.NamespacedName{Namespace: h.Namespace, Name: h.Spec.Chart.Spec.SourceRef.Name}, helmRepo)
+	err := c.Get(ctx, types.NamespacedName{Namespace: h.Namespace, Name: h.Spec.Chart.Spec.SourceRef.Name}, helmRepo)
 	if err != nil {
 		return err
 	}
@@ -125,13 +125,12 @@ func MigrateHelmReleaseToApplication(client client.Client, ctx context.Context, 
 		return err
 	}
 
-	// Create the Application on the cluster
 	// Suspend reconcilation
 	h.Spec.Suspend = true
-	client.Update(ctx, &h)
+	c.Update(ctx, &h)
 
 	// Finally, create the Argo CD Application
-	if err := CreateK8SObjects(client, ctx, helmArgoCdApp); err != nil {
+	if err := CreateK8SObjects(c, ctx, helmArgoCdApp); err != nil {
 		return err
 	}
 
@@ -141,6 +140,10 @@ func MigrateHelmReleaseToApplication(client client.Client, ctx context.Context, 
 
 // FluxCleanUp cleans up flux resources
 func FluxCleanUp(k client.Client, ctx context.Context, log log.Logger, ns string) error {
+	// Set up the context with timeout
+	cwt, cancel := context.WithTimeout(ctx, 5*time.Minute)
+	defer cancel()
+
 	//Set up the flux uninstall options
 	// TODO: Maybe make these configurable
 	uninstallFlags := struct {
@@ -154,22 +157,22 @@ func FluxCleanUp(k client.Client, ctx context.Context, log log.Logger, ns string
 	}
 
 	// Uninstall the components
-	if err := fluxuninstall.Components(ctx, log, k, ns, uninstallFlags.dryRun); err != nil {
+	if err := fluxuninstall.Components(cwt, log, k, ns, uninstallFlags.dryRun); err != nil {
 		return err
 	}
 
 	// Uninstall the finalizers
-	if err := fluxuninstall.Finalizers(ctx, log, k, uninstallFlags.dryRun); err != nil {
+	if err := fluxuninstall.Finalizers(cwt, log, k, uninstallFlags.dryRun); err != nil {
 		return err
 	}
 
 	// Uninstall CRDS
-	if err := fluxuninstall.CustomResourceDefinitions(ctx, log, k, uninstallFlags.dryRun); err != nil {
+	if err := fluxuninstall.CustomResourceDefinitions(cwt, log, k, uninstallFlags.dryRun); err != nil {
 		return err
 	}
 
 	// Uninstall the namespace
-	if err := fluxuninstall.Namespace(ctx, log, k, ns, uninstallFlags.dryRun); err != nil {
+	if err := fluxuninstall.Namespace(cwt, log, k, ns, uninstallFlags.dryRun); err != nil {
 		return err
 	}
 
