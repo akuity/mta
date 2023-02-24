@@ -131,14 +131,31 @@ with kubectl.`,
 		// Do the migration automatically if that is set, if not print to stdout
 		if confirmMigrate {
 			log.Info("Migrating HelmRelease \"" + helmRelease.Name + "\" to Argo CD via an Application")
-			// Suspend reconcilation
-			helmRelease.Spec.Suspend = true
-			k.Update(ctx, helmRelease)
+			// Suspend helm reconciliation
+			if err := utils.SuspendFluxObject(k, ctx, helmRelease); err != nil {
+				log.Fatal(err)
+			}
+
+			// suspend helm repo reconciliation
+			if err := utils.SuspendFluxObject(k, ctx, helmRepo); err != nil {
+				log.Fatal(err)
+			}
 
 			// Finally, create the Argo CD Application
 			if err := utils.CreateK8SObjects(k, ctx, helmArgoCdApp); err != nil {
 				log.Fatal(err)
 			}
+
+			// Delete the HelmRelease
+			if err := utils.DeleteK8SObjects(k, ctx, helmRelease); err != nil {
+				log.Fatal(err)
+			}
+
+			// Delete the HelmRepo
+			if err := utils.DeleteK8SObjects(k, ctx, helmRepo); err != nil {
+				log.Fatal(err)
+			}
+
 		} else {
 			// Set the printer type to YAML
 			printr := printers.NewTypeSetter(k.Scheme()).ToPrinter(&printers.YAMLPrinter{})

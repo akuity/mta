@@ -79,12 +79,29 @@ func MigrateKustomizationToApplicationSet(c client.Client, ctx context.Context, 
 	// Generate the ApplicationSet Secret and set the GVK
 	appsetSecret := GenK8SSecret(applicationSet)
 
-	// Suspend reconcilation
-	k.Spec.Suspend = true
-	c.Update(ctx, &k)
+	// Suspend Kustomization reconcilation
+	if err := SuspendFluxObject(c, ctx, &k); err != nil {
+		return err
+
+	}
+
+	// Suspend git repo reconcilation
+	if err := SuspendFluxObject(c, ctx, gitSource); err != nil {
+		return err
+	}
 
 	// Finally, create the Argo CD Application
 	if err := CreateK8SObjects(c, ctx, appsetSecret, appset); err != nil {
+		return err
+	}
+
+	// Delete the Kustomization
+	if err := DeleteK8SObjects(c, ctx, &k); err != nil {
+		return err
+	}
+
+	// Delete the GitRepository
+	if err := DeleteK8SObjects(c, ctx, gitSource); err != nil {
 		return err
 	}
 
@@ -125,12 +142,28 @@ func MigrateHelmReleaseToApplication(c client.Client, ctx context.Context, ans s
 		return err
 	}
 
-	// Suspend reconcilation
-	h.Spec.Suspend = true
-	c.Update(ctx, &h)
+	// Suspend helm reconcilation
+	if err := SuspendFluxObject(c, ctx, &h); err != nil {
+		return err
+	}
+
+	// Suspend helm repo reconcilation
+	if err := SuspendFluxObject(c, ctx, helmRepo); err != nil {
+		return err
+	}
 
 	// Finally, create the Argo CD Application
 	if err := CreateK8SObjects(c, ctx, helmArgoCdApp); err != nil {
+		return err
+	}
+
+	// Delete the HelmRelease
+	if err := DeleteK8SObjects(c, ctx, &h); err != nil {
+		return err
+	}
+
+	// Delete the HelmRepository
+	if err := DeleteK8SObjects(c, ctx, helmRepo); err != nil {
 		return err
 	}
 
@@ -180,11 +213,37 @@ func FluxCleanUp(k client.Client, ctx context.Context, log log.Logger, ns string
 	return nil
 }
 
+// SuspendFluxObject suspends Flux specific objects based on the schema passed in the client.
+func SuspendFluxObject(c client.Client, ctx context.Context, obj ...client.Object) error {
+	// suspend the objects
+	for _, o := range obj {
+		if err := c.Patch(ctx, o, client.RawPatch(types.MergePatchType, []byte(`{"spec":{"suspend":true}}`))); err != nil {
+			return err
+		}
+	}
+
+	// If we're here, it should have gone okay...
+	return nil
+}
+
 // CreateK8SObjects Creates Kubernetes Objects on the Cluster based on the schema passed in the client.
 func CreateK8SObjects(c client.Client, ctx context.Context, obj ...client.Object) error {
 	// Migrate the objects
 	for _, o := range obj {
 		if err := c.Create(ctx, o); err != nil {
+			return err
+		}
+	}
+
+	// If we're here, it should have gone okay...
+	return nil
+}
+
+// DeleteK8SObjects Deletes Kubernetes Objects on the Cluster based on the schema passed in the client.
+func DeleteK8SObjects(c client.Client, ctx context.Context, obj ...client.Object) error {
+	// Migrate the objects
+	for _, o := range obj {
+		if err := c.Delete(ctx, o); err != nil {
 			return err
 		}
 	}

@@ -151,13 +151,28 @@ with kubectl.`,
 
 		// Do the migration automatically if that is set, if not print to stdout
 		if confirmMigrate {
-			// Suspend reconcilation
-			kustomization.Spec.Suspend = true
-			k.Update(ctx, kustomization)
+			// Suspend kustomization reconcilation
+			if err := utils.SuspendFluxObject(k, ctx, kustomization); err != nil {
+				log.Fatal(err)
+			}
+
+			// Suspend the GitRepo reconcilation
+			if err := utils.SuspendFluxObject(k, ctx, gitSource); err != nil {
+				log.Fatal(err)
+			}
 
 			// Finally, create the ApplicationSet with the ApplicationSet Secret
 			log.Info("Migrating Kustomization \"" + kustomization.Name + "\" to ArgoCD via an ApplicationSet")
 			if err := utils.CreateK8SObjects(k, ctx, appsetSecret, appset); err != nil {
+				log.Fatal(err)
+			}
+
+			// If the migration is successful, delete the Kustomization and GitRepo
+			if err := utils.DeleteK8SObjects(k, ctx, kustomization); err != nil {
+				log.Fatal(err)
+			}
+
+			if err := utils.DeleteK8SObjects(k, ctx, gitSource); err != nil {
 				log.Fatal(err)
 			}
 
