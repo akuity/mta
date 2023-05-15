@@ -59,7 +59,7 @@ func GenArgoCdHelmApplication(app ArgoCdHelmApplication) (*v1alpha1.Application,
 	a.SetNamespace(app.Namespace)
 	a.Spec = v1alpha1.ApplicationSpec{
 		Project: app.Project,
-		Source: v1alpha1.ApplicationSource{
+		Source: &v1alpha1.ApplicationSource{
 			Chart:          app.HelmChart,
 			RepoURL:        app.HelmRepo,
 			TargetRevision: app.HelmTargetRevision,
@@ -135,7 +135,7 @@ func GenGitDirAppSet(appSet GitDirApplicationSet) (*v1alpha1.ApplicationSet, err
 				Automated:   &asSPAutomated,
 				Retry:       &asRetry,
 			},
-			Source: v1alpha1.ApplicationSource{
+			Source: &v1alpha1.ApplicationSource{
 				RepoURL:        appSet.AppRepoURL,
 				TargetRevision: appSet.AppTargetRevision,
 				Path:           appSet.AppPath,
