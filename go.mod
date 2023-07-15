@@ -37,6 +37,7 @@ require (
 	github.com/fluxcd/helm-controller/api v0.35.0
 	github.com/fluxcd/kustomize-controller/api v1.0.1
 	github.com/fluxcd/source-controller/api v1.0.1
+	github.com/google/go-github/v53 v53.2.0
 	github.com/jedib0t/go-pretty/v6 v6.4.2
 	github.com/manifoldco/promptui v0.9.0
 	github.com/sirupsen/logrus v1.9.0
@@ -55,7 +56,7 @@ require (
 	cloud.google.com/go/compute/metadata v0.2.1 // indirect
 	github.com/chai2010/gettext-go v1.0.2 // indirect
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e // indirect
-	github.com/cloudflare/circl v1.3.2 // indirect
+	github.com/cloudflare/circl v1.3.3 // indirect
 	github.com/cyphar/filepath-securejoin v0.2.3 // indirect
 	github.com/fluxcd/image-automation-controller/api v0.31.0 // indirect
 	github.com/fluxcd/image-reflector-controller/api v0.26.1 // indirect
@@ -164,7 +165,7 @@ require (
 	go.starlark.net v0.0.0-20221028183056-acb66ad56dd2 // indirect
 	golang.org/x/crypto v0.7.0 // indirect
 	golang.org/x/net v0.10.0 // indirect
-	golang.org/x/oauth2 v0.5.0 // indirect
+	golang.org/x/oauth2 v0.8.0 // indirect
 	golang.org/x/sync v0.2.0 // indirect
 	golang.org/x/sys v0.8.0 // indirect
 	golang.org/x/term v0.8.0 // indirect
