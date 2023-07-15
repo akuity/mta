@@ -19,6 +19,7 @@ import (
 	apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"github.com/google/go-github/v53/github"
 )
 
 // MigrateKustomizationToApplicationSet migrates a Kustomization to an Argo CD ApplicationSet
@@ -284,4 +285,26 @@ func GenK8SSecret(a argo.GitDirApplicationSet) *apiv1.Secret {
 	// Return the secret
 	return s
 
+}
+
+// IsPrivateRepository checks if a repository is public or private
+func IsPrivateRepository(repo string) (bool, error) {
+	// Create the github client
+	client := github.NewClient(nil)
+
+	// Split the repo string
+	spl := strings.Split(repo, "/")
+
+	// Get the repo owner and name
+	owner := spl[3]
+	name := spl[4]
+
+	// Get the repo
+	repository, _, err := client.Repositories.Get(context.Background(), owner, name)
+	if err != nil {
+		return false, err
+	}
+
+	// Return the result
+	return repository.GetPrivate(), nil
 }
