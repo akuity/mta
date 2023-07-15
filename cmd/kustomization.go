@@ -96,17 +96,23 @@ with kubectl.`,
 		}
 
 		// get the gitsource
+		gitRepoName := kustomization.Spec.SourceRef.Name
 		gitSource := &sourcev1.GitRepository{}
-		err = k.Get(ctx, types.NamespacedName{Namespace: kustomizationNamespace, Name: kustomizationName}, gitSource)
+		err = k.Get(ctx, types.NamespacedName{Namespace: kustomizationNamespace, Name: gitRepoName}, gitSource)
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		//Get the secret holding the info we need
 		secret := &corev1.Secret{}
-		err = k.Get(ctx, types.NamespacedName{Namespace: kustomizationNamespace, Name: gitSource.Spec.SecretRef.Name}, secret)
+		isPrivate, err := utils.IsPrivateRepository(gitSource.Spec.URL)
 		if err != nil {
 			log.Fatal(err)
+		}
+		if isPrivate {
+			err = k.Get(ctx, types.NamespacedName{Namespace: kustomizationNamespace, Name: gitSource.Name}, secret)
+			if err != nil {
+				log.Fatal(err)
+			}
 		}
 
 		//	Argo CD ApplicationSet is sensitive about how you give it paths in the Git Dir generator. We need to figure some things out
