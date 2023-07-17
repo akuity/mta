@@ -95,6 +95,14 @@ The same can be done for `Kustomizations`, example:
 $ mta kustomization --name flux-system --confirm-migrate
 ```
 
+By default, the ApplicationSet created from the `Kustomiation` will exclude the `flux-system` directory. You can exclude other directories that have Flux specific Kubernetes objects by passing the `--exclude-dirs` option.
+
+```shell
+$ mta kustomization --name flux-system --exclude-dirs flux-system-extras --confirm-migrate
+```
+
+> *NOTE* To exclude more directories, you an pass a comma separated list to `--exclude-dirs`. Example: `--exclude-dirs foo,bar,bazz`
+
 ## Auto Migration
 
 You can have the `scan` subcommand automatically migrate everything for you

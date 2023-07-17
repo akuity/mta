@@ -224,5 +224,5 @@ func init() {
 	rootCmd.MarkPersistentFlagRequired("name")
 
 	kustomizationCmd.Flags().Bool("confirm-migrate", false, "Automatically Migrate the Kustomization to an ApplicationSet")
-	kustomizationCmd.Flags().String("exclude-dirs", "", "Additional Directories (besides flux-system) to exclude from the GitDir generator")
+	kustomizationCmd.Flags().String("exclude-dirs", "", "Additional Directories (besides flux-system) to exclude from the GitDir generator. Can be single or comma separated")
 }

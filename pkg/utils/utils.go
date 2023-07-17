@@ -25,9 +25,9 @@ import (
 )
 
 // MigrateKustomizationToApplicationSet migrates a Kustomization to an Argo CD ApplicationSet
-func MigrateKustomizationToApplicationSet(c client.Client, ctx context.Context, ans string, k kustomizev1.Kustomization) error {
+func MigrateKustomizationToApplicationSet(c client.Client, ctx context.Context, ans string, k kustomizev1.Kustomization, exd []string) error {
 	// excludedDirs will be paths excluded by the gidir generator
-	excludedDirs := []string{}
+	excludedDirs := exd
 
 	// Get the GitRepository from the Kustomization
 	// get the gitsource
