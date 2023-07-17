@@ -2,6 +2,7 @@ package utils
 
 import (
 	"context"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -19,6 +20,8 @@ import (
 	apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
 )
 
 // MigrateKustomizationToApplicationSet migrates a Kustomization to an Argo CD ApplicationSet
@@ -284,4 +287,15 @@ func GenK8SSecret(a argo.GitDirApplicationSet) *apiv1.Secret {
 	// Return the secret
 	return s
 
+}
+
+// NewRestClient returns a rest.Config
+func NewRestConfig(kubeConfigPath string) (*rest.Config, error) {
+	if kubeConfigPath == "" {
+		kubeConfigPath = os.Getenv("KUBECONFIG")
+	}
+	if kubeConfigPath == "" {
+		kubeConfigPath = clientcmd.RecommendedHomeFile // use default path(.kube/config)
+	}
+	return clientcmd.BuildConfigFromFlags("", kubeConfigPath)
 }

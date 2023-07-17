@@ -66,8 +66,7 @@ func init() {
 
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.mta.yaml)")
 
-	kcf, _ := os.UserHomeDir()
-	rootCmd.PersistentFlags().String("kubeconfig", kcf+"/.kube/config", "Path to the kubeconfig file to use (if not the standard one).")
+	rootCmd.PersistentFlags().String("kubeconfig", "", "Path to the kubeconfig file to use (if not the standard one).")
 	rootCmd.PersistentFlags().String("name", "", "Name of Kustomization or HelmRelease to export")
 	rootCmd.PersistentFlags().String("namespace", "flux-system", "Namespace of where the Kustomization or HelmRelease is")
 	rootCmd.PersistentFlags().String("argocd-namespace", "argocd", "Namespace where Argo CD is installed")

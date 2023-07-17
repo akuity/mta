@@ -32,7 +32,6 @@ import (
 	"github.com/spf13/cobra"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/client-go/tools/clientcmd"
 	client "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -80,7 +79,7 @@ displays the results.
 		argov1alpha1.AddToScheme(kScheme)
 
 		// create rest config using the kubeconfig file.
-		restConfig, err := clientcmd.BuildConfigFromFlags("", kubeConfig)
+		restConfig, err := utils.NewRestConfig(kubeConfig)
 		if err != nil {
 			log.Fatal(err)
 		}

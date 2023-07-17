@@ -31,7 +31,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/cli-runtime/pkg/printers"
-	"k8s.io/client-go/tools/clientcmd"
 	client "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -75,7 +74,7 @@ with kubectl.`,
 		argov1alpha1.AddToScheme(scheme)
 
 		// create rest config using the kubeconfig file.
-		restConfig, err := clientcmd.BuildConfigFromFlags("", kubeConfig)
+		restConfig, err := utils.NewRestConfig(kubeConfig)
 		if err != nil {
 			log.Fatal(err)
 		}
