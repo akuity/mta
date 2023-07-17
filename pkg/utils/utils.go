@@ -26,6 +26,9 @@ import (
 
 // MigrateKustomizationToApplicationSet migrates a Kustomization to an Argo CD ApplicationSet
 func MigrateKustomizationToApplicationSet(c client.Client, ctx context.Context, ans string, k kustomizev1.Kustomization) error {
+	// excludedDirs will be paths excluded by the gidir generator
+	excludedDirs := []string{}
+
 	// Get the GitRepository from the Kustomization
 	// get the gitsource
 	gitSource := &sourcev1.GitRepository{}
@@ -56,13 +59,16 @@ func MigrateKustomizationToApplicationSet(c client.Client, ctx context.Context, 
 		sourcePathExclude = spl[1] + "/flux-system"
 	}
 
+	// Add sourcePathExclude to the excludedDirs
+	excludedDirs = append(excludedDirs, sourcePathExclude)
+
 	// Generate the ApplicationSet manifest based on the struct
 	applicationSet := argo.GitDirApplicationSet{
 		Namespace:               ans,
 		GitRepoURL:              gitSource.Spec.URL,
 		GitRepoRevision:         gitSource.Spec.Reference.Branch,
 		GitIncludeDir:           sourcePath,
-		GitExcludeDir:           sourcePathExclude,
+		GitExcludeDir:           excludedDirs,
 		AppName:                 "{{path.basename}}",
 		AppProject:              "default",
 		AppRepoURL:              gitSource.Spec.URL,
@@ -259,12 +265,13 @@ func DeleteK8SObjects(c client.Client, ctx context.Context, obj ...client.Object
 func GenK8SSecret(a argo.GitDirApplicationSet) *apiv1.Secret {
 	// Some Defaults
 	// TODO: Make these configurable
+	sData := map[string]string{}
 	sName := "mta-migration"
 	sLabels := map[string]string{
 		"argocd.argoproj.io/secret-type": "repository",
 	}
 
-	sData := map[string]string{
+	sData = map[string]string{
 		"sshPrivateKey": a.SSHPrivateKey,
 		"type":          "git",
 		"url":           a.GitOpsRepo,

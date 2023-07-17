@@ -17,7 +17,7 @@ type GitDirApplicationSet struct {
 	GitRepoURL              string
 	GitRepoRevision         string
 	GitIncludeDir           string
-	GitExcludeDir           string
+	GitExcludeDir           []string
 	AppName                 string
 	AppProject              string
 	AppRepoURL              string
@@ -114,12 +114,17 @@ func GenGitDirAppSet(appSet GitDirApplicationSet) (*v1alpha1.ApplicationSet, err
 				Revision: appSet.GitRepoRevision,
 				Directories: []v1alpha1.GitDirectoryGeneratorItem{
 					{Path: appSet.GitIncludeDir},
-					{Path: appSet.GitExcludeDir, Exclude: true},
 				},
 				//Template: v1alpha1.ApplicationSetTemplate{},
 			},
 		},
 	}
+
+	// Append any excluded directories
+	for _, d := range appSet.GitExcludeDir {
+		as.Spec.Generators[0].Git.Directories = append(as.Spec.Generators[0].Git.Directories, v1alpha1.GitDirectoryGeneratorItem{Path: d, Exclude: true})
+	}
+
 	// Reset the Git Template spec because we aren't using it
 	as.Spec.Generators[0].Git.Template.Reset()
 
