@@ -101,7 +101,7 @@ By default, the ApplicationSet created from the `Kustomiation` will exclude the 
 $ mta kustomization --name flux-system --exclude-dirs flux-system-extras --confirm-migrate
 ```
 
-> *NOTE* To exclude more directories, you an pass a comma separated list to `--exclude-dirs`. Example: `--exclude-dirs foo,bar,bazz`
+> *NOTE* To exclude more directories, you an pass a comma separated list to `--exclude-dirs`. Example: `--exclude-dirs foo,bar,bazz`. You can also pass `--exclude-dirs` to the `scan` command as well.
 
 ## Auto Migration
 
