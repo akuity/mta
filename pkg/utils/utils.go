@@ -122,10 +122,16 @@ func MigrateKustomizationToApplicationSet(c client.Client, ctx context.Context, 
 func MigrateHelmReleaseToApplication(c client.Client, ctx context.Context, ans string, h helmv2.HelmRelease) error {
 	// Get the helmchart based on type, report if error
 	helmRepo := &sourcev1.HelmRepository{}
+	helmChart := &sourcev1.HelmChart{}
 	err := c.Get(ctx, types.NamespacedName{Namespace: h.Namespace, Name: h.Spec.Chart.Spec.SourceRef.Name}, helmRepo)
 	if err != nil {
 		return err
 	}
+	err = c.Get(ctx, types.NamespacedName{Namespace: h.Namespace, Name: h.Namespace + "-" + h.Name}, helmChart)
+	if err != nil {
+		return err
+	}
+
 	// Get the Values from the HelmRelease
 	yaml, err := yaml.Marshal(h.Spec.Values)
 	if err != nil {
@@ -161,6 +167,11 @@ func MigrateHelmReleaseToApplication(c client.Client, ctx context.Context, ans s
 		return err
 	}
 
+	// Suspend helm repo reconcilation
+	if err := SuspendFluxObject(c, ctx, helmChart); err != nil {
+		return err
+	}
+
 	// Finally, create the Argo CD Application
 	if err := CreateK8SObjects(c, ctx, helmArgoCdApp); err != nil {
 		return err
@@ -173,6 +184,11 @@ func MigrateHelmReleaseToApplication(c client.Client, ctx context.Context, ans s
 
 	// Delete the HelmRepository
 	if err := DeleteK8SObjects(c, ctx, helmRepo); err != nil {
+		return err
+	}
+
+	// Delete the HelmChart
+	if err := DeleteK8SObjects(c, ctx, helmChart); err != nil {
 		return err
 	}
 

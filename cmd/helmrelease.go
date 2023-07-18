@@ -94,9 +94,16 @@ with kubectl.`,
 			log.Fatal(err)
 		}
 
-		// Get the helmchart based on type, report if error
+		// Get the helmrepo based on type, report if error
 		helmRepo := &sourcev1.HelmRepository{}
 		err = k.Get(ctx, types.NamespacedName{Namespace: helmReleaseNamespace, Name: helmRelease.Spec.Chart.Spec.SourceRef.Name}, helmRepo)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		// Get the helmchart based on type, report if error
+		helmChart := &sourcev1.HelmChart{}
+		err = k.Get(ctx, types.NamespacedName{Namespace: helmRelease.Namespace, Name: helmRelease.Namespace + "-" + helmRelease.Name}, helmChart)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -140,6 +147,11 @@ with kubectl.`,
 				log.Fatal(err)
 			}
 
+			// suspend helm chart
+			if err := utils.SuspendFluxObject(k, ctx, helmChart); err != nil {
+				log.Fatal(err)
+			}
+
 			// Finally, create the Argo CD Application
 			if err := utils.CreateK8SObjects(k, ctx, helmArgoCdApp); err != nil {
 				log.Fatal(err)
@@ -152,6 +164,11 @@ with kubectl.`,
 
 			// Delete the HelmRepo
 			if err := utils.DeleteK8SObjects(k, ctx, helmRepo); err != nil {
+				log.Fatal(err)
+			}
+
+			// Delete the Release
+			if err := utils.DeleteK8SObjects(k, ctx, helmRelease); err != nil {
 				log.Fatal(err)
 			}
 
