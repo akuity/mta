@@ -48,11 +48,8 @@ This utilty exports the named Kustomization and the source Git repo and
 creates a manifests to stdout, which you can pipe into an apply command
 with kubectl.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		// excludedDirs will be paths excluded by the gidir generator
-		excludedDirs := []string{}
-
 		// Get excluded-dirs from the cli
-		exd, err := cmd.Flags().GetString("exclude-dirs")
+		exd, err := cmd.Flags().GetStringSlice("exclude-dirs")
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -132,18 +129,7 @@ with kubectl.`,
 		}
 
 		// Add sourcePathExclude to the excludedDirs
-		excludedDirs = append(excludedDirs, sourcePathExclude)
-
-		//Add any additional excluded dirs to the excludedDirs
-		if len(exd) > 0 {
-			// Append the excluded dirs to the excludedDirs slice ignoring any empty strings
-			for _, v := range strings.Split(exd, ",") {
-				if len(v) > 0 {
-					excludedDirs = append(excludedDirs, v)
-				}
-			}
-			//excludedDirs = append(excludedDirs, strings.Split(exd, ",")...)
-		}
+		exd = append(exd, sourcePathExclude)
 
 		// Generate the ApplicationSet manifest based on the struct
 		applicationSet := argo.GitDirApplicationSet{
@@ -151,7 +137,7 @@ with kubectl.`,
 			GitRepoURL:              gitSource.Spec.URL,
 			GitRepoRevision:         gitSource.Spec.Reference.Branch,
 			GitIncludeDir:           sourcePath,
-			GitExcludeDir:           excludedDirs,
+			GitExcludeDir:           exd,
 			AppName:                 "{{path.basename}}",
 			AppProject:              "default",
 			AppRepoURL:              gitSource.Spec.URL,
@@ -200,7 +186,6 @@ with kubectl.`,
 
 		} else {
 			// Print the ApplicationSet and Secret to stdout
-
 			// Set the printer type to YAML
 			printr := printers.NewTypeSetter(k.Scheme()).ToPrinter(&printers.YAMLPrinter{})
 
@@ -224,5 +209,5 @@ func init() {
 	rootCmd.MarkPersistentFlagRequired("name")
 
 	kustomizationCmd.Flags().Bool("confirm-migrate", false, "Automatically Migrate the Kustomization to an ApplicationSet")
-	kustomizationCmd.Flags().String("exclude-dirs", "", "Additional Directories (besides flux-system) to exclude from the GitDir generator. Can be single or comma separated")
+	kustomizationCmd.Flags().StringSlice("exclude-dirs", []string{}, "Additional Directories (besides flux-system) to exclude from the GitDir generator. Can be single or comma separated")
 }

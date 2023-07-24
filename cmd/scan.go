@@ -18,7 +18,6 @@ package cmd
 import (
 	"context"
 	"os"
-	"strings"
 
 	argov1alpha1 "github.com/argoproj/argo-cd/v2/pkg/apis/application/v1alpha1"
 	"github.com/christianh814/mta/pkg/argo"
@@ -44,11 +43,8 @@ var scanCmd = &cobra.Command{
 displays the results.
 `,
 	Run: func(cmd *cobra.Command, args []string) {
-		// excludedDirs will be paths excluded by the gidir generator
-		excludedDirs := []string{}
-
 		// Get excluded-dirs from the cli
-		exd, err := cmd.Flags().GetString("exclude-dirs")
+		exd, err := cmd.Flags().GetStringSlice("exclude-dirs")
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -139,21 +135,10 @@ displays the results.
 				log.Fatal("Argo CD is not installed or running")
 			}
 
-			//Add any additional excluded dirs to the excludedDirs
-			if len(exd) > 0 {
-				// Append the excluded dirs to the excludedDirs slice ignoring any empty strings
-				for _, v := range strings.Split(exd, ",") {
-					if len(v) > 0 {
-						excludedDirs = append(excludedDirs, v)
-					}
-				}
-				//excludedDirs = append(excludedDirs, strings.Split(exd, ",")...)
-			}
-
 			// Migrate Kustomizations
 			for _, kl := range kustomizationList.Items {
 				log.Info("Migrating Kustomization ", kl.Name)
-				if err := utils.MigrateKustomizationToApplicationSet(k, ctx, argoCDNamespace, kl, excludedDirs); err != nil {
+				if err := utils.MigrateKustomizationToApplicationSet(k, ctx, argoCDNamespace, kl, exd); err != nil {
 					log.Fatal(err)
 				}
 			}
@@ -205,5 +190,5 @@ func init() {
 
 	scanCmd.Flags().Bool("auto-migrate", false, "Migrate HelmReleases and Kustomizations to Argo CD and uninstalls Flux")
 	scanCmd.Flags().Bool("confirm", false, "Confirm migraton to Argo CD and uninstalls Flux")
-	scanCmd.Flags().String("exclude-dirs", "", "Additional Directories (besides flux-system) to exclude from the GitDir generator")
+	scanCmd.Flags().StringSlice("exclude-dirs", []string{}, "Additional Directories (besides flux-system) to exclude from the GitDir generator. Can be single or comma separated")
 }
