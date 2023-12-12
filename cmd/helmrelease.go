@@ -23,8 +23,8 @@ import (
 	argov1alpha1 "github.com/argoproj/argo-cd/v2/pkg/apis/application/v1alpha1"
 	yaml "sigs.k8s.io/yaml"
 
-	"github.com/christianh814/mta/pkg/argo"
-	"github.com/christianh814/mta/pkg/utils"
+	"github.com/akutiy/mta/pkg/argo"
+	"github.com/akutiy/mta/pkg/utils"
 	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
 	log "github.com/sirupsen/logrus"

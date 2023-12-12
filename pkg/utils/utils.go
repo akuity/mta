@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/christianh814/mta/pkg/argo"
+	"github.com/akuity/mta/pkg/argo"
 	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
 	yaml "sigs.k8s.io/yaml"
 
@@ -15,8 +15,8 @@ import (
 
 	"github.com/fluxcd/flux2/pkg/log"
 	fluxuninstall "github.com/fluxcd/flux2/pkg/uninstall"
-	kustomizev1 "github.com/fluxcd/kustomize-controller/api/v1beta1"
-	sourcev1 "github.com/fluxcd/source-controller/api/v1beta1"
+	kustomizev1 "github.com/fluxcd/kustomize-controller/api/v1"
+	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
 	apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"

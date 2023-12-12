@@ -20,9 +20,9 @@ import (
 	"os"
 	"strings"
 
+	"github.com/akuity/mta/pkg/argo"
+	"github.com/akuity/mta/pkg/utils"
 	argov1alpha1 "github.com/argoproj/argo-cd/v2/pkg/apis/application/v1alpha1"
-	"github.com/christianh814/mta/pkg/argo"
-	"github.com/christianh814/mta/pkg/utils"
 	kustomizev1 "github.com/fluxcd/kustomize-controller/api/v1"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1"
 	log "github.com/sirupsen/logrus"
