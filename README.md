@@ -6,7 +6,7 @@ CD. This is in the "proof of concept" phase and I make no guarantees
 
 # Installation
 
-Install the `mta` binary from the [releases page](https://github.com/christianh814/mta/releases) in your `$PATH`.
+Install the `mta` binary from the [releases page](https://github.com/akuity/mta/releases) in your `$PATH`.
 
 There is shell completion for convenience. 
 
