@@ -1,8 +1,8 @@
-# mta
+# mta (Migrate to Argo CD)
 
 The `mta` cli will export Flux components to Argo CD consumable
 CRs. This can be used in order to help migrating from Flux to Argo
-CD. This is in the "proof of concept" phase and I make no guarantees
+CD. This is in the "proof of concept" phase and we make no guarantees.
 
 # Installation
 
