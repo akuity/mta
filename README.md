@@ -18,6 +18,10 @@ mta completion bash
 
 # Quickstart
 
+Here's a video which explains how to use 'mta' to export Flux components to Argo CD consumable CRs.
+
+[![Introduction to 'mta' - Migrate from Flux to Argo CD](https://img.youtube.com/vi/c8sP0QSOfsg/0.jpg)](https://www.youtube.com/watch?v=c8sP0QSOfsg)
+
 Below are some examples
 
 ## Manual Migration
