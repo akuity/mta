@@ -322,3 +322,11 @@ func NewRestConfig(kubeConfigPath string) (*rest.Config, error) {
 	}
 	return clientcmd.BuildConfigFromFlags("", kubeConfigPath)
 }
+
+// TruncMsg truncates a message to 71 characters
+func TruncMsg(msg string) string {
+	if len(msg) > 71 {
+		return msg[:71] + "..."
+	}
+	return msg
+}

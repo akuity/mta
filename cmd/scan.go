@@ -165,7 +165,7 @@ displays the results.
 
 			// Add all Helm Releases to the table
 			for _, hr := range helmReleaseList.Items {
-				t.AppendRow(table.Row{hr.Kind, hr.Name, hr.Namespace, hr.Status.Conditions[0].Message})
+				t.AppendRow(table.Row{hr.Kind, hr.Name, hr.Namespace, utils.TruncMsg(hr.Status.Conditions[0].Message)})
 			}
 
 			// Add a separotor to the table
@@ -173,7 +173,7 @@ displays the results.
 
 			// Add all Kustomizations to the table
 			for _, k := range kustomizationList.Items {
-				t.AppendRow(table.Row{k.Kind, k.Name, k.Namespace, k.Status.Conditions[0].Message})
+				t.AppendRow(table.Row{k.Kind, k.Name, k.Namespace, utils.TruncMsg(k.Status.Conditions[0].Message)})
 			}
 
 			//Render the table to the console
