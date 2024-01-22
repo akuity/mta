@@ -167,8 +167,8 @@ with kubectl.`,
 				log.Fatal(err)
 			}
 
-			// Delete the Release
-			if err := utils.DeleteK8SObjects(k, ctx, helmRelease); err != nil {
+			// Delete the chart
+			if err := utils.DeleteK8SObjects(k, ctx, helmChart); err != nil {
 				log.Fatal(err)
 			}
 
