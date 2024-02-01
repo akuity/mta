@@ -4,6 +4,8 @@ The `mta` cli will export Flux components to Argo CD consumable
 CRs. This can be used in order to help migrating from Flux to Argo
 CD. This is in the "proof of concept" phase and we make no guarantees.
 
+We love feedback! Come join us at our [Akuity Discord Community](https://akuity.community)!
+
 # Installation
 
 Install the `mta` binary from the [releases page](https://github.com/akuity/mta/releases) in your `$PATH`.
