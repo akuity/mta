@@ -25,8 +25,10 @@ import (
 
 	"github.com/akuity/mta/pkg/argo"
 	"github.com/akuity/mta/pkg/utils"
-	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
-	sourcev1 "github.com/fluxcd/source-controller/api/v1beta2"
+	helmv2 "github.com/fluxcd/helm-controller/api/v2beta2"
+
+	sourcev1 "github.com/fluxcd/source-controller/api/v1"
+	sourcev1beta2 "github.com/fluxcd/source-controller/api/v1beta2"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -95,14 +97,14 @@ with kubectl.`,
 		}
 
 		// Get the helmrepo based on type, report if error
-		helmRepo := &sourcev1.HelmRepository{}
+		helmRepo := &sourcev1beta2.HelmRepository{}
 		err = k.Get(ctx, types.NamespacedName{Namespace: helmReleaseNamespace, Name: helmRelease.Spec.Chart.Spec.SourceRef.Name}, helmRepo)
 		if err != nil {
 			log.Fatal(err)
 		}
 
 		// Get the helmchart based on type, report if error
-		helmChart := &sourcev1.HelmChart{}
+		helmChart := &sourcev1beta2.HelmChart{}
 		err = k.Get(ctx, types.NamespacedName{Namespace: helmRelease.Namespace, Name: helmRelease.Namespace + "-" + helmRelease.Name}, helmChart)
 		if err != nil {
 			log.Fatal(err)
@@ -137,38 +139,7 @@ with kubectl.`,
 		// Do the migration automatically if that is set, if not print to stdout
 		if confirmMigrate {
 			log.Info("Migrating HelmRelease \"" + helmRelease.Name + "\" to Argo CD via an Application")
-			// Suspend helm reconciliation
-			if err := utils.SuspendFluxObject(k, ctx, helmRelease); err != nil {
-				log.Fatal(err)
-			}
-
-			// suspend helm repo reconciliation
-			if err := utils.SuspendFluxObject(k, ctx, helmRepo); err != nil {
-				log.Fatal(err)
-			}
-
-			// suspend helm chart
-			if err := utils.SuspendFluxObject(k, ctx, helmChart); err != nil {
-				log.Fatal(err)
-			}
-
-			// Finally, create the Argo CD Application
-			if err := utils.CreateK8SObjects(k, ctx, helmArgoCdApp); err != nil {
-				log.Fatal(err)
-			}
-
-			// Delete the HelmRelease
-			if err := utils.DeleteK8SObjects(k, ctx, helmRelease); err != nil {
-				log.Fatal(err)
-			}
-
-			// Delete the HelmRepo
-			if err := utils.DeleteK8SObjects(k, ctx, helmRepo); err != nil {
-				log.Fatal(err)
-			}
-
-			// Delete the chart
-			if err := utils.DeleteK8SObjects(k, ctx, helmChart); err != nil {
+			if err := utils.MigrateHelmReleaseToApplication(k, ctx, argoCDNamespace, *helmRelease); err != nil {
 				log.Fatal(err)
 			}
 

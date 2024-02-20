@@ -23,7 +23,7 @@ import (
 	"github.com/akuity/mta/pkg/utils"
 	argov1alpha1 "github.com/argoproj/argo-cd/v2/pkg/apis/application/v1alpha1"
 	fluxlog "github.com/fluxcd/flux2/pkg/log"
-	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
+	helmv2 "github.com/fluxcd/helm-controller/api/v2beta2"
 	kustomizev1 "github.com/fluxcd/kustomize-controller/api/v1"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1"
 	"github.com/jedib0t/go-pretty/v6/table"
