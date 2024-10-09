@@ -108,10 +108,18 @@ with kubectl.`,
 		}
 
 		//Get the secret holding the info we need
-		secret := &corev1.Secret{}
-		err = k.Get(ctx, types.NamespacedName{Namespace: kustomizationNamespace, Name: gitSource.Spec.SecretRef.Name}, secret)
-		if err != nil {
-			log.Fatal(err)
+		var sshPrivateKey string
+		if gitSource.Spec.SecretRef != nil && gitSource.Spec.SecretRef.Name != "" {
+			secret := &corev1.Secret{}
+			err = k.Get(ctx, types.NamespacedName{Namespace: kustomizationNamespace, Name: gitSource.Spec.SecretRef.Name}, secret)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			sshPrivateKey = string(secret.Data["identity"])
+		} else {
+			log.Info("Warning: SecretRef is not defined in the GitRepository spec. Proceeding without the SSH private key.")
+			sshPrivateKey = "" // Leave the SSHPrivateKey empty if the secret is not available
 		}
 
 		//	Argo CD ApplicationSet is sensitive about how you give it paths in the Git Dir generator. We need to figure some things out
@@ -145,7 +153,7 @@ with kubectl.`,
 			AppPath:                 "{{path}}",
 			AppDestinationServer:    "https://kubernetes.default.svc",
 			AppDestinationNamespace: kustomization.Spec.TargetNamespace,
-			SSHPrivateKey:           string(secret.Data["identity"]),
+			SSHPrivateKey:           sshPrivateKey,
 			GitOpsRepo:              gitSource.Spec.URL,
 		}
 
