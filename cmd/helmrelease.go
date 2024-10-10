@@ -94,9 +94,11 @@ with kubectl.`,
 			log.Fatal(err)
 		}
 
+		helmRepoNamespace := GetHelmRepoNamespace(helmRelease)
+
 		// Get the helmrepo based on type, report if error
 		helmRepo := &sourcev1.HelmRepository{}
-		err = k.Get(ctx, types.NamespacedName{Namespace: helmReleaseNamespace, Name: helmRelease.Spec.Chart.Spec.SourceRef.Name}, helmRepo)
+		err = k.Get(ctx, types.NamespacedName{Namespace: helmRepoNamespace, Name: helmRelease.Spec.Chart.Spec.SourceRef.Name}, helmRepo)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -183,6 +185,15 @@ with kubectl.`,
 		}
 
 	},
+}
+
+func GetHelmRepoNamespace(helmRelease *helmv2.HelmRelease) string {
+	helmRepoNamespace := helmRelease.Spec.Chart.Spec.SourceRef.Namespace
+	if helmRepoNamespace == "" {
+		helmRepoNamespace = helmRelease.Namespace
+	}
+
+	return helmRepoNamespace
 }
 
 func init() {
