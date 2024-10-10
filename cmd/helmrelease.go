@@ -190,7 +190,7 @@ with kubectl.`,
 func GetHelmRepoNamespace(helmRelease *helmv2.HelmRelease) string {
 	helmRepoNamespace := helmRelease.Spec.Chart.Spec.SourceRef.Namespace
 	if helmRepoNamespace == "" {
-		helmRepoNamespace = "default"
+		helmRepoNamespace = helmRelease.Namespace
 	}
 
 	return helmRepoNamespace
