@@ -37,5 +37,5 @@ func TestHelmGetRepoNamespace(t *testing.T) {
 	}
 
 	namespace = GetHelmRepoNamespace(helmReleaseWithoutNamespace)
-	assert.Equal(t, "default", namespace, "Expected the namespace to be 'default'")
+	assert.Equal(t, helmReleaseWithoutNamespace.Namespace, namespace, "Expected the namespace to be 'default'")
 }
