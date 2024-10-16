@@ -93,7 +93,6 @@ with kubectl.`,
 		if err != nil {
 			log.Fatal(err)
 		}
-
 		helmRepoNamespace := GetHelmRepoNamespace(helmRelease)
 
 		// Get the helmrepo based on type, report if error
@@ -105,7 +104,7 @@ with kubectl.`,
 
 		// Get the helmchart based on type, report if error
 		helmChart := &sourcev1.HelmChart{}
-		err = k.Get(ctx, types.NamespacedName{Namespace: helmRelease.Namespace, Name: helmRelease.Namespace + "-" + helmRelease.Name}, helmChart)
+		err = k.Get(ctx, types.NamespacedName{Namespace: helmRepoNamespace, Name: helmRepoNamespace + "-" + helmRelease.Name}, helmChart)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -116,10 +115,14 @@ with kubectl.`,
 			log.Fatal(err)
 		}
 
+		helmAppNamePrefix := helmRelease.Spec.TargetNamespace
+		if helmAppNamePrefix == "" {
+			helmAppNamePrefix = helmReleaseNamespace
+		}
 		// Generate the Argo CD Helm Application
 		helmApp := argo.ArgoCdHelmApplication{
 			//Name:                 helmRelease.Name,
-			Name:                 helmRelease.Spec.TargetNamespace + "-" + helmRelease.Name,
+			Name:                 helmAppNamePrefix + "-" + helmRelease.Name,
 			Namespace:            argoCDNamespace,
 			DestinationNamespace: helmRelease.Spec.TargetNamespace,
 			DestinationServer:    "https://kubernetes.default.svc",
