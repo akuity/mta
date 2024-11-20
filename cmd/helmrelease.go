@@ -17,6 +17,7 @@ package cmd
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"strconv"
 
@@ -64,6 +65,10 @@ with kubectl.`,
 		helmReleaseNamespace, _ := cmd.Flags().GetString("namespace")
 		confirmMigrate, _ := cmd.Flags().GetBool("confirm-migrate")
 
+		if helmReleaseName == "" || helmReleaseNamespace == "" {
+			log.Fatal("Both --name and --namespace flags must be provided")
+		}
+
 		// Set up the default context
 		ctx := context.TODO()
 
@@ -103,8 +108,10 @@ with kubectl.`,
 		}
 
 		// Get the helmchart based on type, report if error
+		helmChartName := fmt.Sprintf("%s-%s", helmReleaseNamespace, helmReleaseName)
+
 		helmChart := &sourcev1.HelmChart{}
-		err = k.Get(ctx, types.NamespacedName{Namespace: helmRepoNamespace, Name: helmRepoNamespace + "-" + helmRelease.Name}, helmChart)
+		err = k.Get(ctx, types.NamespacedName{Namespace: helmRepoNamespace, Name: helmChartName}, helmChart)
 		if err != nil {
 			log.Fatal(err)
 		}
