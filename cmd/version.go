@@ -25,7 +25,7 @@ import (
 var versionCmd = &cobra.Command{
 	Use:   "version",
 	Short: "Displays version.",
-	Long:  `This command will display the version of the CLI in json format`,
+	Long:  `This command will display the version of the CLI`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println(rootCmd.Version)
 	},
