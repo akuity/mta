@@ -65,8 +65,8 @@ with kubectl.`,
 		helmReleaseNamespace, _ := cmd.Flags().GetString("namespace")
 		confirmMigrate, _ := cmd.Flags().GetBool("confirm-migrate")
 
-		if helmReleaseName == "" || helmReleaseNamespace == "" {
-			log.Fatal("Both --name and --namespace flags must be provided")
+		if helmReleaseName == "" {
+			log.Fatal("Flag --name must be provided")
 		}
 
 		// Set up the default context
@@ -208,7 +208,6 @@ func GetHelmRepoNamespace(helmRelease *helmv2.HelmRelease) string {
 
 func init() {
 	rootCmd.AddCommand(helmreleaseCmd)
-	rootCmd.MarkPersistentFlagRequired("name")
 
 	helmreleaseCmd.Flags().Bool("confirm-migrate", false, "Automatically Migrate the HelmRelease to an ApplicationSet")
 }
