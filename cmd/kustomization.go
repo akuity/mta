@@ -218,7 +218,6 @@ with kubectl.`,
 
 func init() {
 	rootCmd.AddCommand(kustomizationCmd)
-	rootCmd.MarkPersistentFlagRequired("name")
 
 	kustomizationCmd.Flags().Bool("confirm-migrate", false, "Automatically Migrate the Kustomization to an ApplicationSet")
 	kustomizationCmd.Flags().StringSlice("exclude-dirs", []string{}, "Additional Directories (besides flux-system) to exclude from the GitDir generator. Can be single or comma separated")

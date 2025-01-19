@@ -60,20 +60,12 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 
-	// Here you will define your flags and configuration settings.
-	// Cobra supports persistent flags, which, if defined here,
-	// will be global for your application.
-
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.mta.yaml)")
 
 	rootCmd.PersistentFlags().String("kubeconfig", "", "Path to the kubeconfig file to use (if not the standard one).")
 	rootCmd.PersistentFlags().String("name", "", "Name of Kustomization or HelmRelease to export")
 	rootCmd.PersistentFlags().String("namespace", "flux-system", "Namespace of where the Kustomization or HelmRelease is")
 	rootCmd.PersistentFlags().String("argocd-namespace", "argocd", "Namespace where Argo CD is installed")
-
-	// Cobra also supports local flags, which will only run
-	// when this action is called directly.
-	//rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
 
 // initConfig reads in config file and ENV variables if set.
