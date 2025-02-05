@@ -3,39 +3,49 @@ package cmd
 import (
 	helmv2 "github.com/fluxcd/helm-controller/api/v2beta1"
 	"github.com/magiconair/properties/assert"
-	"k8s.io/apimachinery/pkg/runtime"
 	"testing"
 )
 
-func TestHelmGetRepoNamespace(t *testing.T) {
-	scheme := runtime.NewScheme()
-	helmv2.AddToScheme(scheme)
-
-	helmReleaseWithNamespace := &helmv2.HelmRelease{
-		Spec: helmv2.HelmReleaseSpec{
-			Chart: helmv2.HelmChartTemplate{
-				Spec: helmv2.HelmChartTemplateSpec{
-					SourceRef: helmv2.CrossNamespaceObjectReference{
-						Namespace: "custom-namespace",
+func TestGetHelmRepoNamespace(t *testing.T) {
+	tests := []struct {
+		name              string
+		helmRelease       *helmv2.HelmRelease
+		helmRepoNamespace string
+	}{
+		{
+			name: "when helmrelease namespace is defined",
+			helmRelease: &helmv2.HelmRelease{
+				Spec: helmv2.HelmReleaseSpec{
+					Chart: helmv2.HelmChartTemplate{
+						Spec: helmv2.HelmChartTemplateSpec{
+							SourceRef: helmv2.CrossNamespaceObjectReference{
+								Namespace: "custom-namespace",
+							},
+						},
 					},
 				},
 			},
+			helmRepoNamespace: "custom-namespace",
 		},
-	}
-
-	namespace := GetHelmRepoNamespace(helmReleaseWithNamespace)
-	assert.Equal(t, "custom-namespace", namespace, "Expected the namespace to be 'custom-namespace'")
-
-	helmReleaseWithoutNamespace := &helmv2.HelmRelease{
-		Spec: helmv2.HelmReleaseSpec{
-			Chart: helmv2.HelmChartTemplate{
-				Spec: helmv2.HelmChartTemplateSpec{
-					SourceRef: helmv2.CrossNamespaceObjectReference{},
+		{
+			name: "when helmrelease namespace is not defined",
+			helmRelease: &helmv2.HelmRelease{
+				Spec: helmv2.HelmReleaseSpec{
+					Chart: helmv2.HelmChartTemplate{
+						Spec: helmv2.HelmChartTemplateSpec{
+							SourceRef: helmv2.CrossNamespaceObjectReference{},
+						},
+					},
 				},
 			},
+			helmRepoNamespace: "",
 		},
 	}
 
-	namespace = GetHelmRepoNamespace(helmReleaseWithoutNamespace)
-	assert.Equal(t, helmReleaseWithoutNamespace.Namespace, namespace, "Expected the namespace to be 'default'")
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			namespace := GetHelmRepoNamespace(tt.helmRelease)
+			assert.Equal(t, namespace, tt.helmRepoNamespace)
+		})
+	}
 }
