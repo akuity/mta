@@ -100,9 +100,12 @@ with kubectl.`,
 			log.Fatal(err)
 		}
 
+		gitRepoNamespace := getGitRepoNamespace(kustomization)
+		gitRepoName := kustomization.Spec.SourceRef.Name
+
 		// get the gitsource
 		gitSource := &sourcev1.GitRepository{}
-		err = k.Get(ctx, types.NamespacedName{Namespace: kustomizationNamespace, Name: kustomizationName}, gitSource)
+		err = k.Get(ctx, types.NamespacedName{Namespace: gitRepoNamespace, Name: gitRepoName}, gitSource)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -210,6 +213,15 @@ with kubectl.`,
 		}
 
 	},
+}
+
+func getGitRepoNamespace(kustomization *kustomizev1.Kustomization) string {
+	gitRepoNamespace := kustomization.Spec.SourceRef.Namespace
+	if gitRepoNamespace == "" {
+		gitRepoNamespace = kustomization.Namespace
+	}
+
+	return gitRepoNamespace
 }
 
 func init() {
