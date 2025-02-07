@@ -65,10 +65,6 @@ with kubectl.`,
 		helmReleaseNamespace, _ := cmd.Flags().GetString("namespace")
 		confirmMigrate, _ := cmd.Flags().GetBool("confirm-migrate")
 
-		if helmReleaseName == "" || helmReleaseNamespace == "" {
-			log.Fatal("Both --name and --namespace flags must be provided")
-		}
-
 		// Set up the default context
 		ctx := context.TODO()
 

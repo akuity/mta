@@ -1,0 +1,42 @@
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: helmrepo
+  namespace: helm
+spec:
+  interval: 1m
+  url: https://stefanprodan.github.io/podinfo
+  secretRef:
+    name: example-user
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: example-user
+  namespace: default
+type: Opaque
+stringData:
+  username: example
+  password: "123456"
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: helmrelease
+  namespace: default
+spec:
+  interval: 1m
+  chart:
+    spec:
+      chart: podinfo
+      version: '4.0.1'
+      sourceRef:
+        kind: HelmRepository
+        name: helmrepo
+  install:
+    createNamespace: true
+  upgrade:
+    remediation:
+      retries: 3
+  values:
+    replicaCount: 2

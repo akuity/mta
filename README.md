@@ -109,6 +109,8 @@ $ mta kustomization --name flux-system --exclude-dirs flux-system-extras --confi
 
 > *NOTE* To exclude more directories, you an pass a comma separated list to `--exclude-dirs`. Example: `--exclude-dirs foo,bar,bazz`. You can also pass `--exclude-dirs` to the `scan` command as well.
 
+For a detailed list of examples, read the [examples](./examples) docs.
+
 ## Auto Migration
 
 You can have the `scan` subcommand automatically migrate everything for you
